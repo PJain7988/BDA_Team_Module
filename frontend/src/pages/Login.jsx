@@ -8,9 +8,12 @@ import { LogIn, KeyRound, ArrowLeft, Eye, EyeOff, Zap, Shield, BarChart3, Users 
 import { toast } from 'react-toastify';
 
 const DEMO_CREDENTIALS = [
-  { role: 'Manager', email: 'manager@mfg.com', password: 'Manager@123', color: 'from-purple-500 to-violet-600', icon: Shield, desc: 'Full system access' },
-  { role: 'Team Lead', email: 'teamlead@mfg.com', password: 'TeamLead@123', color: 'from-blue-500 to-cyan-600', icon: Users, desc: 'Team & analytics view' },
-  { role: 'BDA', email: 'bda@mfg.com', password: 'BDA@123', color: 'from-emerald-500 to-teal-600', icon: BarChart3, desc: 'Lead management only' },
+  { role: 'Manager', email: 'manager@mfg.com', password: 'Manager@123', color: 'from-purple-500 to-violet-600', icon: Shield, desc: 'Full access' },
+  { role: 'Team Lead', email: 'teamlead@mfg.com', password: 'TeamLead@123', color: 'from-blue-500 to-cyan-600', icon: Users, desc: 'Sarah Lead' },
+  { role: 'Team Lead 2', email: 'teamlead2@mfg.com', password: 'TeamLead2@123', color: 'from-sky-500 to-blue-600', icon: Users, desc: 'Raj Sharma' },
+  { role: 'BDA', email: 'bda@mfg.com', password: 'BDA@123', color: 'from-emerald-500 to-teal-600', icon: BarChart3, desc: 'Alex BDA' },
+  { role: 'BDA 2', email: 'bda2@mfg.com', password: 'BDA2@123', color: 'from-green-500 to-emerald-600', icon: BarChart3, desc: 'Priya Patel' },
+  { role: 'BDA 3', email: 'bda3@mfg.com', password: 'BDA3@123', color: 'from-teal-500 to-cyan-600', icon: BarChart3, desc: 'Mohit Singh' },
 ];
 
 function Login() {
@@ -184,7 +187,7 @@ function Login() {
                   <Zap size={13} className="text-amber-400" />
                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Quick Demo Login</p>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto scrollbar-thin">
                   {DEMO_CREDENTIALS.map((cred, idx) => {
                     const Icon = cred.icon;
                     return (

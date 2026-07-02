@@ -29,15 +29,29 @@
 
 ## 🔐 Demo Credentials
 
-> Ready-to-use accounts seeded automatically into the database.
+> Ready-to-use accounts **auto-seeded** into the database on first start.
 
-| Role | Email | Password | Access Level |
-|------|-------|----------|--------------|
-| 👑 **Manager** | `manager@mfg.com` | `Manager@123` | Full system access — all features |
-| 👨‍💼 **Team Lead** | `teamlead@mfg.com` | `TeamLead@123` | Team + Analytics + Leads |
-| 📋 **BDA** | `bda@mfg.com` | `BDA@123` | Own leads + Communications only |
+| # | Role | Email | Password | Name | Access Level |
+|---|------|-------|----------|------|--------------|
+| 1 | 👑 **Manager** | `manager@mfg.com` | `Manager@123` | John Manager | Full system access — all features |
+| 2 | 👨‍💼 **Team Lead** | `teamlead@mfg.com` | `TeamLead@123` | Sarah Lead | Team Alpha — analytics, assign, reports |
+| 3 | 👨‍💼 **Team Lead 2** | `teamlead2@mfg.com` | `TeamLead2@123` | Raj Sharma | Team Beta — analytics, assign, reports |
+| 4 | 📋 **BDA** | `bda@mfg.com` | `BDA@123` | Alex BDA | Team Alpha — own leads + communications |
+| 5 | 📋 **BDA 2** | `bda2@mfg.com` | `BDA2@123` | Priya Patel | Team Alpha — own leads + communications |
+| 6 | 📋 **BDA 3** | `bda3@mfg.com` | `BDA3@123` | Mohit Singh | Team Beta — own leads + communications |
 
-> 💡 **Tip:** On the login page, click the **Quick Demo Login** buttons to auto-fill credentials instantly!
+> 💡 **Tip:** Click the **Quick Demo Login** role cards on the login page to auto-fill any of these credentials instantly!
+
+### 🏢 Demo Teams
+| Team | Team Lead | Members | Region | Revenue Target |
+|------|-----------|---------|--------|----------------|
+| **Sales Alpha** | Sarah Lead | Alex BDA, Priya Patel | North America | $500,000 |
+| **Sales Beta** | Raj Sharma | Mohit Singh | South Asia | $350,000 |
+
+### 📋 Pre-Seeded Sample Data
+- **8 Leads** across all pipeline stages (Prospecting → Closed Won/Lost)
+- **5 Communication logs** (Email, Call, Meeting types)
+- **2 Teams** with distinct leads and members
 
 ---
 
@@ -268,51 +282,171 @@ npm run dev
 
 ---
 
-## 🧪 API Endpoints
+## 🧪 Complete API Reference
 
-### Base URL (Production)
+**Base URL (Production):** `https://bda-team-module-82s1.onrender.com`
+
+### 🔓 Public Routes — No Authentication Required
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | API info, version, all endpoint links |
+| `GET` | `/api/health` | Health check — uptime, env, node version |
+| `POST` | `/api/auth/login` | Login user |
+| `POST` | `/api/auth/register` | Register new user |
+| `POST` | `/api/auth/forgot-password` | Request password reset |
+
+**Login body:**
+```json
+{ "email": "manager@mfg.com", "password": "Manager@123" }
 ```
-https://bda-team-module-82s1.onrender.com
+**Login response:**
+```json
+{ "token": "<jwt>", "user": { "_id", "name", "email", "role", "team" } }
 ```
 
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | Login user |
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/forgot-password` | Request password reset |
-| GET  | `/api/auth/me` | Get current user |
+---
 
-### Leads
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET    | `/api/leads` | Get all leads (filterable) |
-| POST   | `/api/leads` | Create new lead |
-| GET    | `/api/leads/:id` | Get single lead |
-| PUT    | `/api/leads/:id` | Update lead |
-| DELETE | `/api/leads/:id` | Delete lead |
-| PATCH  | `/api/leads/:id/stage` | Update lead stage |
+### 🔐 Auth Routes — Bearer Token Required
 
-### Team
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET  | `/api/team/members` | Get all team members |
-| POST | `/api/team/members` | Add team member |
-| PUT  | `/api/team/members/:id` | Update member |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/auth/me` | ✅ All | Get current user profile |
+| `PUT` | `/api/auth/update-profile` | ✅ All | Update name, phone, department |
+| `PUT` | `/api/auth/change-password` | ✅ All | Change password |
+| `POST` | `/api/auth/logout` | ✅ All | Server-side logout |
 
-### Analytics
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/analytics/dashboard` | Dashboard metrics |
-| GET | `/api/analytics/trends` | Monthly trend data |
-| GET | `/api/analytics/team-performance` | Team KPIs |
-| GET | `/api/analytics/pipeline` | Pipeline breakdown |
+---
 
-### Health
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | API health check |
-| GET | `/` | API info & docs |
+### 📋 Leads
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/leads` | ✅ All | Get leads (role-filtered) |
+| `GET` | `/api/leads/:id` | ✅ All | Get single lead with comms |
+| `POST` | `/api/leads` | ✅ All | Create new lead |
+| `PUT` | `/api/leads/:id` | ✅ All | Update lead |
+| `PATCH` | `/api/leads/:id/stage` | ✅ All | Update pipeline stage only |
+| `POST` | `/api/leads/:id/assign` | 👨‍💼 TL + Mgr | Assign lead to user |
+| `DELETE` | `/api/leads/:id` | 👑 Manager | Delete lead |
+
+**GET /api/leads — Query Params:**
+```
+?stage=Prospecting&assignedTo=<userId>&industry=Automotive
+&page=1&limit=20&search=Apex
+```
+**Stage values:** `Prospecting` `Qualification` `Proposal` `Negotiation` `Closed Won` `Closed Lost`
+
+**POST /api/leads — Body:**
+```json
+{
+  "companyName": "Apex Automotive",
+  "contactName": "Robert Ford",
+  "email": "robert@apexauto.com",
+  "phone": "8005550199",
+  "industry": "Automotive",
+  "dealValue": 120000,
+  "stage": "Prospecting",
+  "source": "Website",
+  "assignedTo": "<userId>",
+  "expectedCloseDate": "2026-08-01",
+  "probability": 20,
+  "notes": "Interested in bulk supply."
+}
+```
+
+---
+
+### 👥 Team
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/team` | ✅ All | Get all teams |
+| `POST` | `/api/team` | 👑 Manager | Create team |
+| `PUT` | `/api/team/:id` | 👑 Manager | Update team |
+| `DELETE` | `/api/team/:id` | 👑 Manager | Delete team |
+| `GET` | `/api/team/members` | ✅ All | Get all members |
+| `GET` | `/api/team/members/:id` | ✅ All | Get member with stats |
+| `POST` | `/api/team/members` | 👑 Manager | Add new member |
+| `PUT` | `/api/team/members/:id` | 👑 Manager | Update member |
+| `DELETE` | `/api/team/members/:id` | 👑 Manager | Remove member |
+
+---
+
+### 💬 Communications
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/communications` | ✅ All | Get all comm logs (role-filtered) |
+| `GET` | `/api/communications/:leadId` | ✅ All | Get all logs for a lead |
+| `POST` | `/api/communications` | ✅ All | Log new communication |
+| `PUT` | `/api/communications/:id` | ✅ All | Update communication |
+| `DELETE` | `/api/communications/:id` | ✅ All | Delete communication |
+
+**POST /api/communications — Body:**
+```json
+{
+  "lead": "<leadId>",
+  "type": "Call",
+  "subject": "Requirement Discussion",
+  "description": "Discussed pricing and shipping terms.",
+  "communicatedWith": "Robert Ford",
+  "duration": 25,
+  "nextFollowUp": "2026-07-10"
+}
+```
+**Type values:** `Call` `Email` `Meeting` `Note` `Demo`
+
+---
+
+### 📈 Analytics
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/analytics/dashboard` | ✅ All | KPIs — leads, revenue, conversion |
+| `GET` | `/api/analytics/trends` | ✅ All | Monthly trends (`?months=6`) |
+| `GET` | `/api/analytics/team-performance` | 👨‍💼 TL + Mgr | Per-member KPI breakdown |
+| `GET` | `/api/analytics/pipeline` | ✅ All | Stage-wise lead counts & values |
+| `GET` | `/api/analytics/export` | 👨‍💼 TL + Mgr | Export data as JSON |
+
+**Dashboard response:**
+```json
+{
+  "metrics": {
+    "totalLeads": 8,
+    "closedDeals": 1,
+    "conversionRate": 12.5,
+    "totalRevenue": 180000,
+    "pipelineValue": 1305000
+  }
+}
+```
+
+### ⚡ Quick Test with curl
+
+```bash
+# 1. Health check
+curl https://bda-team-module-82s1.onrender.com/api/health
+
+# 2. Login as Manager & save token
+TOKEN=$(curl -s -X POST https://bda-team-module-82s1.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"manager@mfg.com","password":"Manager@123"}' | jq -r '.token')
+
+# 3. Get all leads
+curl https://bda-team-module-82s1.onrender.com/api/leads \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Get dashboard metrics
+curl https://bda-team-module-82s1.onrender.com/api/analytics/dashboard \
+  -H "Authorization: Bearer $TOKEN"
+
+# 5. Create a lead
+curl -X POST https://bda-team-module-82s1.onrender.com/api/leads \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"companyName":"Test Corp","contactName":"John Doe","dealValue":50000,"stage":"Prospecting"}'
+```
 
 ---
 
