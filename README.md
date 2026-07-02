@@ -1,115 +1,183 @@
-# BDA Team Module - Manufacturing Lead Management System
+# BDA Team Module — Manufacturing CRM Portal
 
-A modern, full-stack MERN application designed for Business Development Associate teams in manufacturing companies. This system streamlines lead management, sales tracking, team collaboration, and performance analytics.
+<div align="center">
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://bda-team-module.vercel.app/)
+[![Backend API](https://img.shields.io/badge/⚙️_Backend_API-Render-46E3B7?style=for-the-badge&logo=render)](https://bda-team-module-82s1.onrender.com)
+[![GitHub](https://img.shields.io/badge/📦_Source_Code-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/PJain7988/BDA_Team_Module)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+
+**A production-ready, full-stack MERN application for manufacturing BDA teams to manage leads, track performance, and collaborate efficiently.**
+
+[🌐 Open Live App](https://bda-team-module.vercel.app/) &nbsp;|&nbsp; [📡 API Health Check](https://bda-team-module-82s1.onrender.com/api/health) &nbsp;|&nbsp; [📂 GitHub Repository](https://github.com/PJain7988/BDA_Team_Module)
+
+</div>
+
+---
+
+## 🔗 Live Deployment Links
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **Frontend** (Vercel) | https://bda-team-module.vercel.app/ | [![Vercel](https://img.shields.io/badge/status-live-green)](https://bda-team-module.vercel.app/) |
+| **Backend API** (Render) | https://bda-team-module-82s1.onrender.com | [![Render](https://img.shields.io/badge/status-live-green)](https://bda-team-module-82s1.onrender.com/api/health) |
+| **API Health Check** | https://bda-team-module-82s1.onrender.com/api/health | [![Health](https://img.shields.io/badge/health-ok-brightgreen)](https://bda-team-module-82s1.onrender.com/api/health) |
+
+> ⚠️ **Note:** The Render backend may take 30–60 seconds to wake up on the first request (free tier cold start). Please wait briefly and then try logging in.
+
+---
+
+## 🔐 Demo Credentials
+
+> Ready-to-use accounts seeded automatically into the database.
+
+| Role | Email | Password | Access Level |
+|------|-------|----------|--------------|
+| 👑 **Manager** | `manager@mfg.com` | `Manager@123` | Full system access — all features |
+| 👨‍💼 **Team Lead** | `teamlead@mfg.com` | `TeamLead@123` | Team + Analytics + Leads |
+| 📋 **BDA** | `bda@mfg.com` | `BDA@123` | Own leads + Communications only |
+
+> 💡 **Tip:** On the login page, click the **Quick Demo Login** buttons to auto-fill credentials instantly!
+
+---
+
+## 📸 Screenshots
+
+### 🔐 Login Page — with Quick Demo Login
+![Login Screen](./screenshots/login.png)
+
+> Features: Glassmorphism card, animated blobs, role-based quick-fill buttons, password show/toggle.
+
+---
+
+### 📊 Dashboard — Real-Time KPI Overview
+![Dashboard](./screenshots/dashboard.png)
+
+> Features: 4 KPI stat cards, 6-month line trend chart, pipeline bar chart, and dark/light mode support.
+
+---
+
+### 📋 Lead Management — Advanced Table & Filters
+![Lead Management](./screenshots/leads.png)
+
+> Features: CRUD operations, stage badges, pagination, search & filter by status/value/team member.
+
+---
+
+### 🗂️ Kanban Board — Drag-and-Drop Pipeline
+![Kanban Board](./screenshots/leads_kanban.png)
+
+> Features: Drag leads across 5 pipeline stages with real-time Socket.io updates.
+
+---
+
+### 📈 Analytics — Business Intelligence & Rankings
+![Analytics](./screenshots/analytics.png)
+
+> Features: Revenue charts, conversion rates, team performance leaderboard, individual BDA KPIs.
+
+---
 
 ## 🎯 Project Overview
 
-The BDA Team Module is a comprehensive workflow management system built to help manufacturing companies:
-- Manage and track sales leads through multiple pipeline stages
-- Monitor team performance with real-time analytics
-- Track client communications and follow-ups
-- Generate detailed reports for management review
-- Facilitate team collaboration with role-based access control
+The BDA Team Module is a comprehensive **workflow management CRM** built for manufacturing companies. It streamlines:
+- Lead pipeline management across multiple stages
+- Team performance monitoring with real-time analytics
+- Client communication and follow-up tracking
+- Role-based access control for BDA, Team Lead, and Manager levels
+- Real-time notifications via Socket.io
 
-## 📸 Visual Tour & Interface
-
-Here is a visual showcase of the modernized, high-fidelity user interface of the BDA CRM Portal:
-
-### 🔐 Secure & Modern Authentication
-![BDA CRM Portal Login Screen](./screenshots/login.png)
-
-### 📊 Real-Time Sales & Lead Analytics Dashboard
-![Analytics and Leads Trends Dashboard](./screenshots/dashboard.png)
-
-### 📋 High-Fidelity Lead Management System
-![Lead Management Table and Stage Tracker](./screenshots/leads.png)
-
-### 🗂️ Interactive Kanban Pipeline Board (Drag-and-Drop)
-![Kanban Pipeline Board](./screenshots/leads_kanban.png)
-
-### 📈 Deep Business Intelligence & Performance Rankings
-![Analytics Charts and Rankings](./screenshots/analytics.png)
-
-## 📋 Features
-
-### Core Features
-- **Lead Management Dashboard** - Complete CRUD operations for leads
-- **Kanban Board** - Drag-and-drop pipeline stages (Prospecting → Negotiation → Closed)
-- **Sales Analytics Dashboard** - Real-time metrics, conversion rates, revenue projections
-- **Team Performance Tracking** - Individual and team KPIs, leaderboards
-- **Communication Log** - Track interactions, follow-ups, meeting notes
-- **Role-Based Access Control** - BDA, Team Lead, Manager roles with different permissions
-- **Real-time Notifications** - Socket.io powered live updates
-- **Export Functionality** - PDF/CSV reports for leads and performance data
-- **Advanced Filtering & Search** - Filter by status, date, team member, value range
-- **User Authentication** - JWT-based secure login
+---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React.js** - UI library
-- **Redux Toolkit** - State management
-- **React Router** - Navigation
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
-- **React Beautiful DnD** - Drag-and-drop functionality
-- **Chart.js/Recharts** - Data visualization
-- **React-Toastify** - Notifications
+| Technology | Purpose |
+|-----------|---------|
+| **React 18** | Component UI library |
+| **Redux Toolkit** | Global state management |
+| **React Router v6** | Client-side routing |
+| **Tailwind CSS v3** | Utility-first styling |
+| **Recharts** | Data visualization charts |
+| **React Beautiful DnD** | Kanban drag-and-drop |
+| **React Toastify** | Toast notifications |
+| **Axios** | HTTP client with interceptors |
+| **Socket.io Client** | Real-time updates |
+| **Lucide React** | Modern icon library |
+| **Vite** | Lightning-fast build tool |
 
 ### Backend
-- **Node.js** - Runtime
-- **Express.js** - Web framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - MongoDB ODM
-- **JWT** - Authentication
-- **Multer** - File uploads
-- **Socket.io** - Real-time communication
-- **Bcryptjs** - Password hashing
-- **Dotenv** - Environment variables
+| Technology | Purpose |
+|-----------|---------|
+| **Node.js** | JavaScript runtime |
+| **Express.js** | Web framework |
+| **MongoDB Atlas** | Cloud NoSQL database |
+| **Mongoose** | MongoDB ODM |
+| **JWT** | Token-based authentication |
+| **Bcryptjs** | Password hashing |
+| **Socket.io** | Real-time WebSocket communication |
+| **Helmet** | HTTP security headers |
+| **Express Rate Limit** | API abuse protection |
+| **Morgan** | HTTP request logger |
+| **Compression** | Response gzip compression |
+
+### Deployment
+| Platform | Service |
+|---------|---------|
+| **Vercel** | Frontend hosting (CI/CD via GitHub) |
+| **Render** | Backend hosting (auto-deploy) |
+| **MongoDB Atlas** | Cloud database (M0 free tier) |
+
+---
 
 ## 📁 Project Structure
 
 ```
-bda-module/
-├── frontend/
+bda-team-module/
+├── frontend/                    # React + Vite frontend
 │   ├── public/
-│   │   └── index.html
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   ├── LeadCard.jsx
-│   │   │   ├── KanbanBoard.jsx
-│   │   │   ├── StatsCard.jsx
-│   │   │   └── Modal.jsx
+│   │   │   ├── Navbar.jsx       # Top navigation with notifications
+│   │   │   ├── Sidebar.jsx      # Collapsible navigation sidebar
+│   │   │   ├── Modal.jsx        # Reusable modal dialog
+│   │   │   ├── LoadingSpinner.jsx
+│   │   │   ├── Notification.jsx # Socket.io notifications
+│   │   │   └── PrivateRoute.jsx
 │   │   ├── pages/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Leads.jsx
-│   │   │   ├── LeadDetail.jsx
-│   │   │   ├── Team.jsx
-│   │   │   ├── Analytics.jsx
-│   │   │   ├── Login.jsx
-│   │   │   └── Communications.jsx
+│   │   │   ├── Login.jsx        # Auth with demo quick-fill
+│   │   │   ├── Dashboard.jsx    # KPIs, trends, charts
+│   │   │   ├── Leads.jsx        # Lead table + Kanban board
+│   │   │   ├── LeadDetail.jsx   # Lead detail & communications
+│   │   │   ├── Team.jsx         # Team members & performance
+│   │   │   ├── Analytics.jsx    # Deep business intelligence
+│   │   │   ├── Communications.jsx
+│   │   │   └── Profile.jsx
 │   │   ├── redux/
 │   │   │   ├── slices/
-│   │   │   │   ├── authSlice.js
-│   │   │   │   ├── leadSlice.js
-│   │   │   │   ├── teamSlice.js
-│   │   │   │   └── notificationSlice.js
 │   │   │   └── store.js
 │   │   ├── services/
-│   │   │   ├── api.js
-│   │   │   ├── authService.js
-│   │   │   ├── leadService.js
-│   │   │   └── teamService.js
-│   │   ├── utils/
-│   │   │   ├── constants.js
-│   │   │   └── helpers.js
+│   │   │   ├── api.js           # Axios instance with interceptors
+│   │   │   └── authService.js
 │   │   ├── App.jsx
-│   │   └── index.css
-│   ├── .env.example
+│   │   └── index.css            # Tailwind + design system
+│   ├── index.html               # SEO-optimized entry point
+│   ├── vite.config.js
 │   └── package.json
-├── backend/
+│
+├── backend/                     # Node.js + Express API
+│   ├── config/
+│   │   └── database.js          # MongoDB connection + memory fallback
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── leadController.js
+│   │   ├── teamController.js
+│   │   ├── communicationController.js
+│   │   └── analyticsController.js
+│   ├── middleware/
+│   │   ├── auth.js              # JWT verification + role check
+│   │   ├── errorHandler.js      # Centralized error handling
+│   │   └── validation.js        # Request validation
 │   ├── models/
 │   │   ├── User.js
 │   │   ├── Lead.js
@@ -119,373 +187,289 @@ bda-module/
 │   │   ├── auth.js
 │   │   ├── leads.js
 │   │   ├── team.js
+│   │   ├── communications.js
 │   │   └── analytics.js
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── leadController.js
-│   │   ├── teamController.js
-│   │   └── analyticsController.js
-│   ├── middleware/
-│   │   ├── auth.js
-│   │   ├── errorHandler.js
-│   │   └── validation.js
 │   ├── utils/
-│   │   ├── constants.js
-│   │   └── helpers.js
-│   ├── config/
-│   │   └── database.js
-│   ├── .env.example
-│   ├── server.js
+│   │   └── seeder.js            # Auto database seeding
+│   ├── server.js                # Express app entry point
 │   └── package.json
+│
+├── api/
+│   └── index.js                 # Vercel serverless entry
+├── screenshots/                 # README screenshots
 ├── .gitignore
-└── .git (initialized with commits)
+├── vercel.json                  # Vercel deployment config
+├── render.yaml                  # Render deployment config
+└── README.md
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
+- Node.js v16+
+- MongoDB (local) or MongoDB Atlas URI
 - npm or yarn
 
-### Installation
-
-#### 1. Clone the Repository
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/bda-module.git
-cd bda-module
+git clone https://github.com/PJain7988/BDA_Team_Module.git
+cd BDA_Team_Module
 ```
 
-#### 2. Backend Setup
-
+### 2. Backend Setup
 ```bash
 cd backend
-
-# Install dependencies
 npm install
 
-# Create .env file
+# Create environment file
 cp .env.example .env
-
-# Configure environment variables
-# Edit .env with your MongoDB URI, JWT secret, etc.
-MONGODB_URI=mongodb://localhost:27017/bda-module
-JWT_SECRET=your_jwt_secret_key_here
-PORT=5000
-NODE_ENV=development
-
-# Start MongoDB (if local)
-# mongod
-
-# Run backend server
-npm run dev
+# Edit .env with your MongoDB URI and JWT secret
 ```
 
-Backend will run on `http://localhost:5000`
-
-#### 3. Frontend Setup
-
-```bash
-cd ../frontend
-
-# Install dependencies
-npm install
-
-# Create .env file
-cp .env.example .env
-
-# Configure environment variables
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_WS_URL=http://localhost:5000
-
-# Start frontend development server
-npm start
-```
-
-Frontend will run on `http://localhost:3000`
-
-## 📝 Environment Variables
-
-### Backend (.env)
-```
-MONGODB_URI=mongodb://localhost:27017/bda-module
-JWT_SECRET=your_super_secret_jwt_key_2024
+**Backend `.env` example:**
+```env
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.xxxx.mongodb.net/BDA_Team_Module
+JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRE=7d
 PORT=5000
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:3000
 ```
 
-### Frontend (.env)
+```bash
+# Start backend
+npm run dev
+# Server: http://localhost:5000
 ```
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_WS_URL=http://localhost:5000
-REACT_APP_ENV=development
+
+### 3. Frontend Setup
+```bash
+cd ../frontend
+npm install
+
+# Create environment file
+cp .env.example .env
 ```
 
-## 🔐 Authentication
+**Frontend `.env` example:**
+```env
+VITE_API_URL=http://localhost:5000
+VITE_WS_URL=http://localhost:5000
+VITE_ENV=development
+```
 
-### Test Credentials
+```bash
+# Start frontend
+npm run dev
+# App: http://localhost:3000
+```
 
-**Manager Role**
-- Email: manager@mfg.com
-- Password: Manager@123
+---
 
-**Team Lead Role**
-- Email: teamlead@mfg.com
-- Password: TeamLead@123
+## 🧪 API Endpoints
 
-**BDA Role**
-- Email: bda@mfg.com
-- Password: BDA@123
+### Base URL (Production)
+```
+https://bda-team-module-82s1.onrender.com
+```
 
-## 📊 Key Features Explained
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | Login user |
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/forgot-password` | Request password reset |
+| GET  | `/api/auth/me` | Get current user |
 
-### 1. Lead Management
-- Create, read, update, delete leads
-- Assign leads to team members
-- Set deal value and expected close date
-- Track lead source and industry
+### Leads
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET    | `/api/leads` | Get all leads (filterable) |
+| POST   | `/api/leads` | Create new lead |
+| GET    | `/api/leads/:id` | Get single lead |
+| PUT    | `/api/leads/:id` | Update lead |
+| DELETE | `/api/leads/:id` | Delete lead |
+| PATCH  | `/api/leads/:id/stage` | Update lead stage |
 
-### 2. Pipeline View (Kanban)
-- Drag leads between stages: Prospecting → Qualification → Proposal → Negotiation → Closed
-- Real-time status updates
-- Visual progress tracking
+### Team
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET  | `/api/team/members` | Get all team members |
+| POST | `/api/team/members` | Add team member |
+| PUT  | `/api/team/members/:id` | Update member |
 
-### 3. Analytics Dashboard
-- Total leads count and conversion rate
-- Revenue metrics and pipeline value
-- Team performance comparison
-- Monthly trend analysis
-- Individual BDA KPIs
+### Analytics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/dashboard` | Dashboard metrics |
+| GET | `/api/analytics/trends` | Monthly trend data |
+| GET | `/api/analytics/team-performance` | Team KPIs |
+| GET | `/api/analytics/pipeline` | Pipeline breakdown |
 
-### 4. Team Management
-- View all team members
-- Track individual performance
-- Assign team leads
-- Monitor team utilization
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | API health check |
+| GET | `/` | API info & docs |
 
-### 5. Communication Log
-- Record all client interactions
-- Track follow-up dates
-- Attach meeting notes
-- Email history integration
-
-### 6. Reports & Export
-- Generate PDF reports
-- Export data to CSV
-- Schedule automatic reports
-- Email reports to stakeholders
+---
 
 ## 🔒 Role-Based Access Control
 
 | Feature | BDA | Team Lead | Manager |
-|---------|-----|-----------|---------|
-| View Own Leads | ✓ | ✓ | ✓ |
-| Create Leads | ✓ | ✓ | ✓ |
-| Edit Own Leads | ✓ | ✓ | ✓ |
-| View Team Leads | ✗ | ✓ | ✓ |
-| Assign Leads | ✗ | ✓ | ✓ |
-| View Analytics | ✗ | ✓ | ✓ |
-| Manage Team | ✗ | ✗ | ✓ |
-| View All Leads | ✗ | ✓ | ✓ |
-| Delete Leads | ✗ | ✗ | ✓ |
-| Generate Reports | ✗ | ✓ | ✓ |
-
-## 🗄️ Database Schema
-
-### User Schema
-```javascript
-{
-  _id: ObjectId,
-  name: String,
-  email: String (unique),
-  password: String (hashed),
-  role: String (BDA, TeamLead, Manager),
-  team: ObjectId (reference to Team),
-  avatar: String,
-  phone: String,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-### Lead Schema
-```javascript
-{
-  _id: ObjectId,
-  companyName: String,
-  contactName: String,
-  email: String,
-  phone: String,
-  industry: String,
-  dealValue: Number,
-  stage: String (Prospecting, Qualification, etc.),
-  source: String,
-  assignedTo: ObjectId (reference to User),
-  expectedCloseDate: Date,
-  probability: Number,
-  notes: String,
-  attachments: [String],
-  createdBy: ObjectId,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-### Communication Schema
-```javascript
-{
-  _id: ObjectId,
-  lead: ObjectId,
-  type: String (Call, Email, Meeting, Note),
-  subject: String,
-  description: String,
-  communicatedWith: String,
-  nextFollowUp: Date,
-  attachments: [String],
-  createdBy: ObjectId,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-## 📦 Installation & Running
-
-### Quick Start (Development)
-
-```bash
-# Terminal 1: Backend
-cd backend
-npm install
-npm run dev
-
-# Terminal 2: Frontend
-cd frontend
-npm install
-npm start
-```
-
-### Production Build
-
-```bash
-# Frontend
-cd frontend
-npm run build
-
-# Backend (ensure NODE_ENV=production)
-cd backend
-npm start
-```
-
-## 📈 Performance Considerations
-
-- **Pagination**: Leads list supports pagination (default 20 per page)
-- **Caching**: Redux caching for frequently accessed data
-- **Lazy Loading**: Components loaded on-demand
-- **Debouncing**: Search and filter operations debounced
-- **Image Optimization**: Avatar images optimized
-
-## 🧪 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current user
-
-### Leads
-- `GET /api/leads` - Get all leads (with filters)
-- `GET /api/leads/:id` - Get lead details
-- `POST /api/leads` - Create new lead
-- `PUT /api/leads/:id` - Update lead
-- `DELETE /api/leads/:id` - Delete lead
-- `PATCH /api/leads/:id/stage` - Update lead stage
-
-### Team
-- `GET /api/team/members` - Get team members
-- `GET /api/team/members/:id` - Get member details
-- `POST /api/team/members` - Add team member
-- `PUT /api/team/members/:id` - Update member
-
-### Communications
-- `GET /api/communications` - Get all communications
-- `POST /api/communications` - Create communication log
-- `GET /api/communications/:leadId` - Get lead communications
-
-### Analytics
-- `GET /api/analytics/dashboard` - Dashboard metrics
-- `GET /api/analytics/team-performance` - Team KPIs
-- `GET /api/analytics/pipeline` - Pipeline analysis
-- `GET /api/analytics/export` - Export data
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Issues
-```bash
-# Ensure MongoDB is running
-# Linux/Mac: brew services start mongodb-community
-# Windows: MongoDB should be in Services
-
-# Check connection string in .env
-# Format: mongodb://localhost:27017/bda-module
-```
-
-### Port Already in Use
-```bash
-# Change PORT in backend .env
-PORT=5001
-
-# Or kill process on port
-lsof -i :5000
-kill -9 <PID>
-```
-
-### CORS Errors
-- Ensure `CORS_ORIGIN` in backend .env matches frontend URL
-- Check that both servers are running
-
-## 📚 Learning Resources
-
-- [MERN Stack Guide](https://www.mongodb.com/mern-stack)
-- [React Documentation](https://react.dev)
-- [Express.js Guide](https://expressjs.com)
-- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-
-## 🤝 Git Workflow
-
-The project includes meaningful commit history:
-
-```bash
-git log --oneline
-
-# You'll see commits like:
-# - feat: implement lead management dashboard
-# - feat: add kanban board with drag-and-drop
-# - feat: create authentication system with JWT
-# - feat: build analytics dashboard with charts
-# - feat: add team management features
-# - feat: implement role-based access control
-# - feat: create communication log module
-# - feat: add export to PDF/CSV functionality
-# - refactor: optimize component structure
-# - docs: add comprehensive README
-```
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 👨‍💼 Author
-
-Created as a technical assessment for MERN Stack Developer Intern position.
-
-## 📞 Support
-
-For issues or questions, please reach out to the development team.
+|---------|:---:|:---------:|:-------:|
+| View Own Leads | ✅ | ✅ | ✅ |
+| Create Leads | ✅ | ✅ | ✅ |
+| Edit Own Leads | ✅ | ✅ | ✅ |
+| View Team Leads | ❌ | ✅ | ✅ |
+| Assign Leads | ❌ | ✅ | ✅ |
+| View Analytics | ❌ | ✅ | ✅ |
+| Manage Team | ❌ | ❌ | ✅ |
+| Delete Leads | ❌ | ❌ | ✅ |
+| Generate Reports | ❌ | ✅ | ✅ |
 
 ---
 
-**Last Updated**: May 2024
-**Version**: 1.0.0
-**Status**: Production Ready ✅
+## 🗄️ Database Schema
+
+<details>
+<summary><strong>User Schema</strong></summary>
+
+```javascript
+{
+  name:       String (required),
+  email:      String (unique, required),
+  password:   String (bcrypt hashed),
+  role:       'BDA' | 'TeamLead' | 'Manager',
+  team:       ObjectId → Team,
+  phone:      String,
+  department: String,
+  avatar:     String,
+  createdAt:  Date,
+  updatedAt:  Date
+}
+```
+</details>
+
+<details>
+<summary><strong>Lead Schema</strong></summary>
+
+```javascript
+{
+  companyName:      String (required),
+  contactName:      String (required),
+  email:            String,
+  phone:            String,
+  industry:         String,
+  dealValue:        Number,
+  stage:            'Prospecting' | 'Qualification' | 'Proposal' | 'Negotiation' | 'Closed Won' | 'Closed Lost',
+  source:           String,
+  assignedTo:       ObjectId → User,
+  expectedCloseDate:Date,
+  probability:      Number (0–100),
+  notes:            String,
+  communications:   [ObjectId → Communication],
+  createdBy:        ObjectId → User,
+  createdAt:        Date,
+  updatedAt:        Date
+}
+```
+</details>
+
+<details>
+<summary><strong>Communication Schema</strong></summary>
+
+```javascript
+{
+  lead:            ObjectId → Lead,
+  type:            'Call' | 'Email' | 'Meeting' | 'Note' | 'Demo',
+  subject:         String,
+  description:     String,
+  communicatedWith:String,
+  duration:        Number (minutes),
+  nextFollowUp:    Date,
+  createdBy:       ObjectId → User,
+  createdAt:       Date
+}
+```
+</details>
+
+---
+
+## 📈 Performance Features
+
+- **Redux caching** — reduces redundant API calls
+- **Lazy loading** — routes loaded on demand
+- **Debounced search** — prevents excessive API hits
+- **Pagination** — lead list supports 20 items per page
+- **Gzip compression** — backend responses compressed
+- **Rate limiting** — 500 global / 20 auth requests per 15 min
+- **In-memory MongoDB fallback** — works even without Atlas URI
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend cold start (Render free tier)
+The backend may take **30–60 seconds** on first request. Simply wait and retry.
+
+### CORS errors
+Make sure `CORS_ORIGIN` in backend `.env` matches the frontend URL exactly.
+
+### MongoDB connection
+If `MONGODB_URI` is not set, the backend automatically uses an **in-memory MongoDB** (data resets on restart). Set a real Atlas URI for persistence.
+
+### Port conflicts
+```bash
+# Change PORT in backend .env
+PORT=5001
+```
+
+---
+
+## 🤝 Git Workflow
+
+```bash
+git clone https://github.com/PJain7988/BDA_Team_Module.git
+cd BDA_Team_Module
+
+# Make changes
+git add .
+git commit -m "feat: your feature description"
+git push origin main
+```
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## 👨‍💻 Author
+
+**Prateek Jain** — Full-stack MERN Developer
+
+Built as a technical assessment project demonstrating production-grade full-stack development with React, Node.js, MongoDB, and real-time WebSocket capabilities.
+
+---
+
+## 📞 Support & Links
+
+| Resource | Link |
+|----------|------|
+| 🌐 Live App | https://bda-team-module.vercel.app/ |
+| 📡 Backend API | https://bda-team-module-82s1.onrender.com |
+| 💊 API Health | https://bda-team-module-82s1.onrender.com/api/health |
+| 📦 GitHub | https://github.com/PJain7988/BDA_Team_Module |
+
+---
+
+<div align="center">
+
+**Last Updated:** July 2026 &nbsp;·&nbsp; **Version:** 1.0.0 &nbsp;·&nbsp; **Status:** 🟢 Production Ready
+
+</div>

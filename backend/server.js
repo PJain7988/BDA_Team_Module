@@ -9,139 +9,179 @@ const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const compression = require('compression');
 const connectDB = require('./config/database');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
 
-// Load environment variables
+// ── Environment Variables ──────────────────────────────────────
 dotenv.config();
 
-// Initialize Express app
+// ── Express App ────────────────────────────────────────────────
 const app = express();
 const server = http.createServer(app);
+
+// ── WebSocket Server ───────────────────────────────────────────
 const io = socketIO(server, {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   },
+  transports: ['websocket', 'polling'],
 });
 
-// Connect to MongoDB
+// ── Database Connection ────────────────────────────────────────
 connectDB().then(() => {
   const seedDB = require('./utils/seeder');
   seedDB();
+}).catch((err) => {
+  console.error('❌ Database connection failed:', err.message);
 });
 
-// Security & Optimization Middleware
+// ── Security Middleware ────────────────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false, // Allow inline styles and script executions for React frontend
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
+
+// ── Compression ────────────────────────────────────────────────
 app.use(compression());
 
-// Logger Middleware
-app.use(morgan('dev'));
+// ── Request Logging ────────────────────────────────────────────
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
 
-// Rate Limiter to prevent DOS/Brute-force
-const apiLimiter = rateLimit({
+// ── Rate Limiting ──────────────────────────────────────────────
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // Limit each IP to 300 requests per windowMs
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Too many requests from this IP, please try again after 15 minutes' }
+  message: { status: 'fail', message: 'Too many requests. Please try again after 15 minutes.' },
 });
-app.use('/api/', apiLimiter);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 'fail', message: 'Too many login attempts. Please try again after 15 minutes.' },
+});
+app.use('/api/', globalLimiter);
 
+// ── CORS ───────────────────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:5173',
   'https://bda-team-module.vercel.app',
-  process.env.CORS_ORIGIN
+  process.env.CORS_ORIGIN,
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, Render health checks)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
     }
+    callback(new Error(`CORS policy: origin ${origin} is not allowed.`));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/leads', require('./routes/leads'));
-app.use('/api/team', require('./routes/team'));
-app.use('/api/communications', require('./routes/communications'));
-app.use('/api/analytics', require('./routes/analytics'));
+// ── Body Parsers ───────────────────────────────────────────────
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-// Health check endpoint
+// ── API Information ────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    name: 'BDA Team Module API',
+    version: '1.0.0',
+    description: 'Manufacturing Lead Management System REST API',
+    status: 'Operational ✅',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health:    `${req.protocol}://${req.get('host')}/api/health`,
+      auth:      `${req.protocol}://${req.get('host')}/api/auth`,
+      leads:     `${req.protocol}://${req.get('host')}/api/leads`,
+      team:      `${req.protocol}://${req.get('host')}/api/team`,
+      analytics: `${req.protocol}://${req.get('host')}/api/analytics`,
+      comms:     `${req.protocol}://${req.get('host')}/api/communications`,
+    },
+    links: {
+      frontend: 'https://bda-team-module.vercel.app',
+      github:   'https://github.com/PJain7988/BDA_Team_Module',
+    },
+  });
+});
+
+// ── Health Check ───────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'Server is running', timestamp: new Date() });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err : {},
+  res.json({
+    status: 'ok',
+    message: 'BDA Team Module API is healthy',
+    uptime: `${Math.floor(process.uptime())}s`,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    node: process.version,
   });
 });
 
-// Socket.io real-time events
+// ── Routes ─────────────────────────────────────────────────────
+app.use('/api/auth',           authLimiter, require('./routes/auth'));
+app.use('/api/leads',          require('./routes/leads'));
+app.use('/api/team',           require('./routes/team'));
+app.use('/api/communications', require('./routes/communications'));
+app.use('/api/analytics',      require('./routes/analytics'));
+
+// ── 404 + Global Error Handlers ────────────────────────────────
+app.use(notFound);
+app.use(errorHandler);
+
+// ── Socket.io Events ───────────────────────────────────────────
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  console.log(`🔌 Client connected: ${socket.id}`);
 
-  // Lead events
-  socket.on('lead:created', (data) => {
-    io.emit('lead:created', data);
-  });
+  socket.on('lead:created',    (data) => io.emit('lead:created', data));
+  socket.on('lead:updated',    (data) => io.emit('lead:updated', data));
+  socket.on('lead:staged',     (data) => io.emit('lead:staged', data));
+  socket.on('lead:deleted',    (data) => io.emit('lead:deleted', data));
+  socket.on('notification:new',(data) => io.emit('notification:new', data));
 
-  socket.on('lead:updated', (data) => {
-    io.emit('lead:updated', data);
-  });
-
-  socket.on('lead:staged', (data) => {
-    io.emit('lead:staged', data);
-  });
-
-  // Notification events
-  socket.on('notification:new', (data) => {
-    io.emit('notification:new', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Client disconnected: ${socket.id} (${reason})`);
   });
 });
 
-// Make io accessible to routes
+// Make io accessible inside route handlers
 app.set('io', io);
 
-// Start server
+// ── Start Server (non-serverless only) ─────────────────────────
 const PORT = process.env.PORT || 5000;
 if (!process.env.VERCEL) {
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
-    console.log(`📊 Database connected`);
-    console.log(`🔌 WebSocket server active\n`);
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🚀  Server     : http://0.0.0.0:${PORT}`);
+    console.log(`🌍  Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔌  WebSocket  : active`);
+    console.log(`📊  MongoDB    : connecting...`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   });
 }
 
-// Handle graceful shutdown
+// ── Graceful Shutdown ──────────────────────────────────────────
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  console.log('\n⚠️  SIGTERM received — shutting down gracefully...');
   server.close(() => {
-    console.log('Server closed');
+    console.log('✅  HTTP server closed.');
     process.exit(0);
   });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('💥  Unhandled Promise Rejection:', reason);
+  if (process.env.NODE_ENV === 'production') process.exit(1);
 });
 
 module.exports = { app, server, io };
