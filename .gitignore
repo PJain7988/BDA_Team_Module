@@ -1,0 +1,75 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+web_packages/
+
+# Build and distribution directories
+dist/
+dist-ssr/
+build/
+out/
+.vercel/
+.serverless/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented code coverage
+lib-cov
+coverage
+.nyc_output
+
+# Editor caches and configuration
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.classpath
+.project
+.settings/
+
+# OS metadata files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Frontend specific overrides
+frontend/dist/
+frontend/node_modules/
+
+# Backend specific overrides
+backend/node_modules/
+backend/dist/
