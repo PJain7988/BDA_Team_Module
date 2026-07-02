@@ -1,60 +1,34 @@
-# Dependency directories
-node_modules/
-jspm_packages/
-web_packages/
-
-# Build and distribution directories
-dist/
-dist-ssr/
-build/
-out/
-.vercel/
-.serverless/
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.env
-*.env.*
-
 # Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 
-# Diagnostic reports
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Dependency directories
+node_modules/
+jspm_packages/
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
 
-# Directory for instrumented code coverage
-lib-cov
-coverage
+# Build output
+dist
+build
+/frontend/build/
+/frontend/dist/
+
+# Coverage directory
+coverage/
+*.lcov
 .nyc_output
 
-# Editor caches and configuration
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.classpath
-.project
-.settings/
-
-# OS metadata files
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -63,13 +37,19 @@ coverage
 ehthumbs.db
 Thumbs.db
 
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
 # TypeScript cache
 *.tsbuildinfo
 
-# Frontend specific overrides
-frontend/dist/
-frontend/node_modules/
-
-# Backend specific overrides
-backend/node_modules/
-backend/dist/
+# Debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
