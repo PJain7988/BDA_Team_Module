@@ -1,10 +1,13 @@
 // frontend/src/pages/Leads.jsx
-import React, { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Search, Edit2, Trash2, Eye, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal';
+import Papa from 'papaparse';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function Leads() {
   const [leads, setLeads] = useState([]);
@@ -16,6 +19,7 @@ function Leads() {
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   // Form state for new lead
   const [formData, setFormData] = useState({
@@ -83,6 +87,70 @@ function Leads() {
       ...formData,
       [name]: name === 'dealValue' ? parseFloat(value) || 0 : value
     });
+  };
+
+  const handleNotesChange = (value) => {
+    setFormData({ ...formData, notes: value });
+  };
+
+  const handleExportCSV = () => {
+    const csvData = leads.map(lead => ({
+      'Company Name': lead.companyName,
+      'Contact Name': lead.contactName,
+      'Email': lead.email || '',
+      'Phone': lead.phone || '',
+      'Industry': lead.industry,
+      'Deal Value': lead.dealValue,
+      'Stage': lead.stage,
+      'Source': lead.source,
+    }));
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'leads_export.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Leads exported successfully');
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          try {
+            toast.info(`Importing ${results.data.length} leads...`);
+            for (const row of results.data) {
+               if(row['Company Name'] && row['Contact Name']) {
+                 await api.post('/api/leads', {
+                   companyName: row['Company Name'],
+                   contactName: row['Contact Name'],
+                   email: row['Email'],
+                   phone: row['Phone'],
+                   industry: row['Industry'] || 'Other',
+                   dealValue: parseFloat(row['Deal Value']) || 0,
+                   stage: row['Stage'] || 'Prospecting',
+                   source: row['Source'] || 'Other',
+                 });
+               }
+            }
+            toast.success('Leads imported successfully');
+            fetchLeads();
+          } catch (err) {
+            toast.error('Failed to import some leads');
+          } finally {
+            if (fileInputRef.current) fileInputRef.current.value = null;
+          }
+        },
+        error: () => toast.error('Error reading file')
+      });
+    }
   };
 
   const handleCreateLead = async (e) => {
@@ -177,6 +245,27 @@ function Leads() {
               Kanban Board
             </button>
           </div>
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl transition text-xs font-semibold shadow-sm"
+            title="Export CSV"
+          >
+            <Download size={15} />
+          </button>
+          <button
+            onClick={() => fileInputRef.current && fileInputRef.current.click()}
+            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl transition text-xs font-semibold shadow-sm"
+            title="Import CSV"
+          >
+            <Upload size={15} />
+          </button>
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            onChange={handleImportCSV}
+            className="hidden"
+          />
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-505 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition hover-lift font-semibold text-xs animate-none"
@@ -511,14 +600,15 @@ function Leads() {
               <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1.5">
                 Additional Notes
               </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="Details of conversation or specific requirements..."
-                className="w-full px-3 py-2.5 text-xs border border-gray-250 dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
-              ></textarea>
+              <div className="bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-gray-250 dark:border-slate-700">
+                <ReactQuill 
+                  theme="snow" 
+                  value={formData.notes} 
+                  onChange={handleNotesChange}
+                  className="text-xs dark:text-white"
+                  placeholder="Details of conversation or specific requirements..."
+                />
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3 pt-5 border-t border-gray-100 dark:border-slate-700/50">

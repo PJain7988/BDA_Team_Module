@@ -4,6 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Save, X } from 'lucide-react';
 import leadService from '../services/leadService';
 import { toast } from 'react-toastify';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 function LeadDetail() {
   const { id } = useParams();
@@ -239,17 +241,19 @@ function LeadDetail() {
           <section>
             <h2 className="text-xs font-bold text-gray-400 dark:text-gray-550 uppercase tracking-wider mb-4">Additional Information & Notes</h2>
             {editing ? (
-              <textarea
-                name="notes"
-                value={lead.notes || ''}
-                onChange={handleInputChange}
-                rows="4"
-                className="w-full px-3 py-2.5 text-xs border border-gray-250 dark:border-slate-700 dark:bg-slate-900 dark:text-white rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              ></textarea>
+              <div className="bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-gray-250 dark:border-slate-700">
+                <ReactQuill 
+                  theme="snow" 
+                  value={lead.notes || ''} 
+                  onChange={(val) => setLead({ ...lead, notes: val })}
+                  className="text-xs dark:text-white"
+                />
+              </div>
             ) : (
-              <p className="text-xs text-gray-650 dark:text-gray-305 bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-xl border border-gray-100 dark:border-slate-800 leading-relaxed font-medium">
-                {lead.notes || 'No notes currently recorded for this sales lead.'}
-              </p>
+              <div 
+                className="text-xs text-gray-650 dark:text-gray-305 bg-slate-50/50 dark:bg-slate-900/50 p-4 rounded-xl border border-gray-100 dark:border-slate-800 leading-relaxed font-medium prose dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: lead.notes || 'No notes currently recorded for this sales lead.' }}
+              />
             )}
           </section>
         </div>

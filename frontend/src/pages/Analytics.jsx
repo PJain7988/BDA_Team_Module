@@ -1,6 +1,6 @@
 // frontend/src/pages/Analytics.jsx
 import React, { useEffect, useState } from 'react';
-import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Download } from 'lucide-react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 function Analytics() {
   const [pipeline, setPipeline] = useState([]);
   const [performance, setPerformance] = useState([]);
+  const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -19,12 +20,21 @@ function Analytics() {
   const fetchAnalyticsData = async () => {
     try {
       setLoading(true);
-      const [pipelineRes, perfRes] = await Promise.all([
+      const [pipelineRes, perfRes, trendsRes] = await Promise.all([
         api.get('/api/analytics/pipeline'),
         api.get('/api/analytics/team-performance'),
+        api.get('/api/analytics/trends'),
       ]);
       setPipeline(pipelineRes.data.pipeline || []);
       setPerformance(perfRes.data.performance || []);
+      
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const formattedTrends = (trendsRes.data.trends || []).map(t => ({
+        name: `${monthNames[t._id.month - 1]} ${t._id.year}`,
+        Leads: t.count,
+        Revenue: t.revenue
+      }));
+      setTrends(formattedTrends);
     } catch (error) {
       toast.error('Failed to load analytics');
     } finally {
@@ -154,6 +164,36 @@ function Analytics() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Area Chart for Trends */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 p-6 transition duration-200 shadow-sm flex flex-col">
+        <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-wider font-display">Lead Generation & Revenue Trends</h2>
+        <div className="h-[280px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trends} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" className="hidden dark:block" opacity={0.3} />
+              <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+              <YAxis yAxisId="left" stroke="#94a3b8" fontSize={10} tickLine={false} />
+              <YAxis yAxisId="right" orientation="right" stroke="#94a3b8" fontSize={10} tickLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '11px' }} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} />
+              <Area yAxisId="left" type="monotone" dataKey="Leads" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorLeads)" />
+              <Area yAxisId="right" type="monotone" dataKey="Revenue" stroke="#10b981" fillOpacity={1} fill="url(#colorRevenue)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
