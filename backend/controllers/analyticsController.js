@@ -106,7 +106,40 @@ exports.getTeamPerformance = async (req, res) => {
       })
     );
 
-    res.json({ performance });
+    let teamPerformance = [];
+    if (req.user.role === 'Manager') {
+      const Team = require('../models/Team');
+      const teams = await Team.find();
+      
+      teamPerformance = await Promise.all(
+        teams.map(async (team) => {
+          const members = await User.find({ team: team._id });
+          const memberIds = members.map(m => m._id);
+          
+          const totalLeads = await Lead.countDocuments({ assignedTo: { $in: memberIds } });
+          const closedDeals = await Lead.countDocuments({
+            assignedTo: { $in: memberIds },
+            stage: 'Closed Won',
+          });
+          const totalRevenueAgg = await Lead.aggregate([
+            { $match: { assignedTo: { $in: memberIds }, stage: 'Closed Won' } },
+            { $group: { _id: null, total: { $sum: '$dealValue' } } }
+          ]);
+          
+          return {
+            teamId: team._id,
+            name: team.name,
+            totalLeads,
+            closedDeals,
+            targetRevenue: team.targetRevenue,
+            conversionRate: totalLeads > 0 ? ((closedDeals / totalLeads) * 100).toFixed(2) : 0,
+            revenue: totalRevenueAgg[0]?.total || 0,
+          };
+        })
+      );
+    }
+
+    res.json({ performance, teamPerformance });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

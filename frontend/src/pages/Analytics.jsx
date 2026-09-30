@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 function Analytics() {
   const [pipeline, setPipeline] = useState([]);
   const [performance, setPerformance] = useState([]);
+  const [teamPerformance, setTeamPerformance] = useState([]);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +28,9 @@ function Analytics() {
       ]);
       setPipeline(pipelineRes.data.pipeline || []);
       setPerformance(perfRes.data.performance || []);
+      if (perfRes.data.teamPerformance) {
+        setTeamPerformance(perfRes.data.teamPerformance);
+      }
       
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const formattedTrends = (trendsRes.data.trends || []).map(t => ({
@@ -243,6 +247,83 @@ function Analytics() {
           </table>
         </div>
       </div>
+
+      {/* Team Performance Overview (Managers Only) */}
+      {teamPerformance.length > 0 && (
+        <div className="space-y-8 mt-8 border-t border-gray-200/50 dark:border-slate-700/50 pt-8">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white font-display tracking-tight mb-1">Manager Overview: Team Analytics</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Comparative performance of all teams under your management.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Team Revenue vs Target Chart */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 p-6 transition duration-200 shadow-sm flex flex-col">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-wider font-display">Team Revenue vs Target</h2>
+              <div className="h-[280px] w-full flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={teamPerformance} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" className="dark:hidden" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" className="hidden dark:block" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '11px' }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} />
+                    <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} name="Actual Revenue ($)" />
+                    <Bar dataKey="targetRevenue" fill="#94a3b8" radius={[4, 4, 0, 0]} name="Target Revenue ($)" opacity={0.5} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Team Performance Table */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 p-6 transition duration-200 shadow-sm flex flex-col">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-wider font-display">Team Leaderboard</h2>
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full">
+                  <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-gray-200/50 dark:border-slate-700/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Team Name</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Leads</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Conv. %</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Revenue</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Target %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-150/30 dark:divide-slate-700/30">
+                    {teamPerformance.sort((a, b) => b.revenue - a.revenue).map((team) => {
+                      const targetAchievement = team.targetRevenue > 0 ? ((team.revenue / team.targetRevenue) * 100).toFixed(1) : 0;
+                      return (
+                        <tr key={team.teamId} className="hover:bg-slate-50/30 dark:hover:bg-slate-750/20 transition duration-150">
+                          <td className="px-4 py-3 text-xs font-bold text-gray-950 dark:text-gray-100">{team.name}</td>
+                          <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{team.totalLeads}</td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 rounded-md text-[10px] font-bold">
+                              {team.conversionRate}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs font-bold text-emerald-650 dark:text-emerald-400">
+                            ${team.revenue.toLocaleString()}
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                              targetAchievement >= 100 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                              targetAchievement >= 75 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                              'bg-red-500/10 text-red-600 dark:text-red-400'
+                            }`}>
+                              {targetAchievement}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
