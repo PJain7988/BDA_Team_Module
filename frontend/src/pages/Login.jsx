@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../redux/slices/authSlice';
 import authService from '../services/authService';
-import { LogIn, KeyRound, ArrowLeft, Eye, EyeOff, Zap, Shield, BarChart3, Users } from 'lucide-react';
+import { LogIn, KeyRound, ArrowLeft, Eye, EyeOff, Zap, Shield, BarChart3, Users, Fingerprint, Sparkles } from 'lucide-react';
 import { toast } from 'react-toastify';
+import BiometricModal from '../components/BiometricModal';
 
 const DEMO_CREDENTIALS = [
   { role: 'Manager', email: 'manager@mfg.com', password: 'Manager@123', color: 'from-purple-500 to-violet-600', icon: Shield, desc: 'Full access' },
@@ -24,6 +25,7 @@ function Login() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState(null);
+  const [showBiometricModal, setShowBiometricModal] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -176,9 +178,25 @@ function Login() {
                 ) : (
                   <>
                     <LogIn size={16} />
-                    <span>Sign In to Portal</span>
+                    <span>Sign In with Password</span>
                   </>
                 )}
+              </button>
+
+              {/* Biometric Sign In Option */}
+              <div className="relative flex py-0.5 items-center">
+                <div className="flex-grow border-t border-slate-700/60"></div>
+                <span className="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">or sign in with</span>
+                <div className="flex-grow border-t border-slate-700/60"></div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowBiometricModal(true)}
+                className="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 hover:text-cyan-200 font-bold rounded-xl shadow-lg shadow-cyan-500/10 transition duration-200 flex items-center justify-center gap-2 group"
+              >
+                <Fingerprint size={18} className="text-cyan-400 group-hover:scale-110 transition" />
+                <span className="text-xs">Biometric Authentication (Touch ID / Face ID)</span>
               </button>
 
               {/* Demo Credentials */}
@@ -265,6 +283,21 @@ function Login() {
           </div>
         </div>
       </div>
+
+      {/* Biometric Sign In Modal */}
+      <BiometricModal
+        isOpen={showBiometricModal}
+        onClose={() => setShowBiometricModal(false)}
+        mode="login"
+        user={email ? { email } : null}
+        onSuccess={(authResponse) => {
+          if (authResponse.token && authResponse.user) {
+            dispatch(setUser({ token: authResponse.token, user: authResponse.user }));
+            toast.success(`Biometric Sign-In verified for ${authResponse.user.name}! 🎉`);
+            navigate('/dashboard');
+          }
+        }}
+      />
     </div>
   );
 }

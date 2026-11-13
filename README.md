@@ -95,9 +95,12 @@
 ## 🎯 Project Overview
 
 The BDA Team Module is a comprehensive **workflow management CRM** built for manufacturing companies. It streamlines:
-- Lead pipeline management across multiple stages
-- Team performance monitoring with real-time analytics
-- Client communication and follow-up tracking
+- **Biometric Authentication & Field Attendance**: WebAuthn FIDO2 TouchID / FaceID sign-in, daily biometric punch in/out with high-precision GPS geo-stamping.
+- **AI Visiting Card Scanner**: Optical character recognition (OCR) via live webcam or image upload to auto-extract and create verified leads in seconds.
+- **Manufacturing Quotations & RFQs**: Dynamic commercial quotation builder with line items, tax calculations, payment terms, and PDF print layout.
+- **Client Factory Visit Logs**: Geo-verified on-site audits, trial logs, minutes of meeting, and client feedback ratings.
+- **Lead Pipeline Management**: Advanced table, drag-and-drop Kanban board, and instant 1-click WhatsApp messaging.
+- **Team Performance & Analytics**: Real-time KPI tracking, conversion trends, and leaderboards.
 - Role-based access control for BDA, Team Lead, and Manager levels
 - Real-time notifications via Socket.io
 

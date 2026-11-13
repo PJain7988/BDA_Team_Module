@@ -1,6 +1,6 @@
 // frontend/src/pages/Leads.jsx
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, Download, Upload } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, Download, Upload, Camera, FileText, Send, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -8,6 +8,8 @@ import Modal from '../components/Modal';
 import Papa from 'papaparse';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import BusinessCardScannerModal from '../components/BusinessCardScannerModal';
+import QuotationModal from '../components/QuotationModal';
 
 function Leads() {
   const [leads, setLeads] = useState([]);
@@ -18,6 +20,9 @@ function Leads() {
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'board'
   const [draggedLeadId, setDraggedLeadId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
+  const [selectedLeadForQuote, setSelectedLeadForQuote] = useState(null);
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -267,6 +272,14 @@ function Leads() {
             className="hidden"
           />
           <button
+            onClick={() => setShowScannerModal(true)}
+            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-3.5 py-2.5 rounded-xl shadow-md transition hover-lift font-bold text-xs"
+            title="Scan Visiting Card with AI OCR"
+          >
+            <Camera size={15} />
+            <span>Scan Card</span>
+          </button>
+          <button
             onClick={() => setShowModal(true)}
             className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-505 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition hover-lift font-semibold text-xs animate-none"
           >
@@ -350,6 +363,29 @@ function Leads() {
                         ${(lead.dealValue || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-right flex items-center justify-end space-x-1">
+                        {lead.phone && (
+                          <button
+                            onClick={() => {
+                              const p = lead.phone.replace(/[^0-9]/g, '');
+                              const msg = encodeURIComponent(`Hello ${lead.contactName}, following up regarding ${lead.companyName} from BDA Manufacturing team.`);
+                              window.open(`https://wa.me/${p}?text=${msg}`, '_blank');
+                            }}
+                            className="p-1.5 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition"
+                            title="Chat on WhatsApp"
+                          >
+                            <Send size={15} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedLeadForQuote(lead);
+                            setShowQuotationModal(true);
+                          }}
+                          className="p-1.5 text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition"
+                          title="Draft RFQ Quotation"
+                        >
+                          <FileText size={15} />
+                        </button>
                         <button
                           onClick={() => navigate(`/leads/${lead._id}`)}
                           className="p-1.5 text-blue-650 hover:bg-blue-500/10 rounded-lg transition"
@@ -429,6 +465,29 @@ function Leads() {
                       </div>
 
                       <div className="flex items-center justify-end space-x-1 pt-2 border-t border-gray-50 dark:border-slate-750/30">
+                        {lead.phone && (
+                          <button
+                            onClick={() => {
+                              const p = lead.phone.replace(/[^0-9]/g, '');
+                              const msg = encodeURIComponent(`Hello ${lead.contactName}, following up regarding ${lead.companyName} from BDA Manufacturing team.`);
+                              window.open(`https://wa.me/${p}?text=${msg}`, '_blank');
+                            }}
+                            className="p-1 text-emerald-500 hover:bg-emerald-500/10 rounded-md transition"
+                            title="WhatsApp"
+                          >
+                            <Send size={12} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedLeadForQuote(lead);
+                            setShowQuotationModal(true);
+                          }}
+                          className="p-1 text-indigo-500 hover:bg-indigo-500/10 rounded-md transition"
+                          title="Quotation"
+                        >
+                          <FileText size={12} />
+                        </button>
                         <button
                           onClick={() => navigate(`/leads/${lead._id}`)}
                           className="p-1 text-blue-600 hover:bg-blue-500/10 rounded-md transition"
@@ -629,6 +688,22 @@ function Leads() {
           </form>
         </Modal>
       )}
+
+      {/* Business Card Scanner Modal */}
+      <BusinessCardScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onLeadCreated={(newLead) => {
+          fetchLeads();
+        }}
+      />
+
+      {/* Quotation / RFQ Modal */}
+      <QuotationModal
+        isOpen={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        lead={selectedLeadForQuote}
+      />
     </div>
   );
 }

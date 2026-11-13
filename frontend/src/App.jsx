@@ -14,6 +14,7 @@ import Team from './pages/Team';
 import Analytics from './pages/Analytics';
 import Communications from './pages/Communications';
 import Profile from './pages/Profile';
+import BdaHub from './pages/BdaHub';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -62,6 +63,7 @@ function App() {
                   <main className="flex-1 overflow-auto">
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/bda-hub" element={<BdaHub />} />
                       <Route path="/leads" element={<Leads />} />
                       <Route path="/leads/:id" element={<LeadDetail />} />
                       <Route path="/team" element={<Team />} />

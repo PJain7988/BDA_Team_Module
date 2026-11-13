@@ -173,6 +173,25 @@
 .animate-slideLeft { animation: slideInLeft 0.3s ease forwards; }
 .animate-scaleIn   { animation: scaleIn   0.25s ease forwards; }
 
+@keyframes laserScan {
+  0%   { top: 0%; opacity: 0.8; }
+  50%  { top: 100%; opacity: 1; }
+  100% { top: 0%; opacity: 0.8; }
+}
+@keyframes scaleUp {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-laserScan { animation: laserScan 1.6s ease-in-out infinite; }
+.animate-scaleUp   { animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-shake     { animation: shake 0.4s ease-in-out forwards; }
+
 /* Skeleton loader */
 .skeleton {
   background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);

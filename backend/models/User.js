@@ -50,6 +50,27 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    biometricEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    biometricCredentialId: {
+      type: String,
+      default: null,
+    },
+    attendanceHistory: [
+      {
+        punchType: { type: String, enum: ['in', 'out'], default: 'in' },
+        timestamp: { type: Date, default: Date.now },
+        biometricVerified: { type: Boolean, default: true },
+        location: {
+          latitude: Number,
+          longitude: Number,
+          address: String,
+        },
+        notes: String,
+      },
+    ],
     lastLogin: Date,
     createdAt: {
       type: Date,

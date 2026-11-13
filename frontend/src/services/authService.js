@@ -35,6 +35,26 @@ const authService = {
     const response = await api.put('/api/auth/change-password', { currentPassword, newPassword });
     return response.data;
   },
+
+  biometricLogin: async (credentials = {}) => {
+    const response = await api.post('/api/auth/biometric-login', credentials);
+    return response.data;
+  },
+
+  biometricRegister: async (credentialId) => {
+    const response = await api.post('/api/auth/biometric-register', { credentialId });
+    return response.data;
+  },
+
+  logAttendance: async (punchData) => {
+    const response = await api.post('/api/auth/attendance/punch', punchData);
+    return response.data;
+  },
+
+  getAttendanceHistory: async () => {
+    const response = await api.get('/api/auth/attendance/history');
+    return response.data;
+  },
 };
 
 export default authService;

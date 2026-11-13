@@ -1,11 +1,13 @@
 // frontend/src/pages/LeadDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Save, X } from 'lucide-react';
+import { ArrowLeft, Edit2, Save, X, Send, FileText, MapPin } from 'lucide-react';
 import leadService from '../services/leadService';
 import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import QuotationModal from '../components/QuotationModal';
+import FieldVisitModal from '../components/FieldVisitModal';
 
 function LeadDetail() {
   const { id } = useParams();
@@ -13,6 +15,8 @@ function LeadDetail() {
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
+  const [showFieldVisitModal, setShowFieldVisitModal] = useState(false);
 
   const stages = ['Prospecting', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'];
   const industries = ['Automotive', 'Textile', 'Food Processing', 'Pharmaceuticals', 'Electronics', 'Chemicals', 'Other'];
@@ -143,13 +147,51 @@ function LeadDetail() {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="flex items-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition text-xs font-semibold hover-lift"
-            >
-              <Edit2 size={15} />
-              <span>Edit Lead</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {lead.phone && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = lead.phone.replace(/[^0-9]/g, '');
+                    const msg = encodeURIComponent(`Hello ${lead.contactName}, following up regarding ${lead.companyName} manufacturing specifications.`);
+                    window.open(`https://wa.me/${p}?text=${msg}`, '_blank');
+                  }}
+                  className="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl shadow-sm transition text-xs font-semibold"
+                  title="Direct WhatsApp Outreach"
+                >
+                  <Send size={14} />
+                  <span>WhatsApp</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowQuotationModal(true)}
+                className="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2.5 rounded-xl shadow-sm transition text-xs font-semibold"
+                title="Create Commercial Quotation"
+              >
+                <FileText size={14} />
+                <span>Create Quote</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFieldVisitModal(true)}
+                className="flex items-center space-x-1.5 bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-2.5 rounded-xl shadow-sm transition text-xs font-semibold"
+                title="Log Factory Visit with GPS"
+              >
+                <MapPin size={14} />
+                <span>Log Visit</span>
+              </button>
+
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition text-xs font-semibold hover-lift"
+              >
+                <Edit2 size={15} />
+                <span>Edit Lead</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -340,6 +382,23 @@ function LeadDetail() {
           </div>
         </div>
       </div>
+
+      {/* Quotation / RFQ Modal */}
+      <QuotationModal
+        isOpen={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        lead={lead}
+      />
+
+      {/* Field Visit Modal */}
+      <FieldVisitModal
+        isOpen={showFieldVisitModal}
+        onClose={() => setShowFieldVisitModal(false)}
+        lead={lead}
+        onVisitLogged={() => {
+          fetchLead();
+        }}
+      />
     </div>
   );
 }

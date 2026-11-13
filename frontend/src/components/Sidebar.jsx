@@ -1,7 +1,7 @@
 // frontend/src/components/Sidebar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Fingerprint } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/slices/authSlice';
 
@@ -13,6 +13,7 @@ function Sidebar() {
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Overview & KPIs' },
+    { path: '/bda-hub', label: 'BDA Hub', icon: Sparkles, description: 'Field, Scan & RFQ', badge: 'NEW' },
     { path: '/leads', label: 'Leads', icon: Briefcase, description: 'Manage pipeline' },
     ...(user?.role !== 'BDA' ? [{ path: '/team', label: 'Team', icon: Users, description: 'Team members' }] : []),
     ...(user?.role !== 'BDA' ? [{ path: '/analytics', label: 'Analytics', icon: BarChart3, description: 'Performance data' }] : []),
@@ -88,10 +89,17 @@ function Sidebar() {
             >
               <Icon size={17} className={`flex-shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`} />
               {!collapsed && (
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold block truncate">{item.label}</span>
-                  {!active && (
-                    <span className="text-[9px] text-slate-600 group-hover:text-slate-500 truncate block">{item.description}</span>
+                <div className="flex-1 min-w-0 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold block truncate">{item.label}</span>
+                    {!active && (
+                      <span className="text-[9px] text-slate-600 group-hover:text-slate-500 truncate block">{item.description}</span>
+                    )}
+                  </div>
+                  {item.badge && (
+                    <span className="text-[9px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-md uppercase tracking-wider animate-pulse">
+                      {item.badge}
+                    </span>
                   )}
                 </div>
               )}

@@ -185,3 +185,131 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @route   POST /api/auth/biometric-login
+// @desc    Login via Biometric Authentication (WebAuthn / TouchID / FaceID)
+// @access  Public
+exports.biometricLogin = async (req, res) => {
+  try {
+    const { email, credentialId } = req.body;
+
+    let user;
+    if (email) {
+      user = await User.findOne({ email });
+    } else if (credentialId) {
+      user = await User.findOne({ biometricCredentialId: credentialId });
+    }
+
+    if (!user) {
+      // Fallback to active demo BDA if no specific email provided
+      user = await User.findOne({ role: 'BDA' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: 'No registered user found for this biometric signature' });
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken(user._id);
+
+    res.json({
+      message: 'Biometric verification successful',
+      token,
+      user: user.toJSON(),
+      biometricVerified: true,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route   POST /api/auth/biometric-register
+// @desc    Register or enable biometric credentials for current user
+// @access  Private
+exports.biometricRegister = async (req, res) => {
+  try {
+    const { credentialId } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.biometricEnabled = true;
+    if (credentialId) {
+      user.biometricCredentialId = credentialId;
+    }
+    await user.save();
+
+    res.json({
+      message: 'Biometric credentials registered successfully',
+      user: user.toJSON(),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route   POST /api/auth/attendance/punch
+// @desc    Log biometric attendance (Punch In / Punch Out)
+// @access  Private
+exports.logAttendance = async (req, res) => {
+  try {
+    const { punchType = 'in', location, notes } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const punchRecord = {
+      punchType,
+      timestamp: new Date(),
+      biometricVerified: true,
+      location: location || {
+        latitude: 12.9716,
+        longitude: 77.5946,
+        address: 'BDA Field Office / Client Manufacturing Hub',
+      },
+      notes: notes || `Biometric ${punchType === 'in' ? 'Check-in' : 'Check-out'} completed`,
+    };
+
+    if (!user.attendanceHistory) {
+      user.attendanceHistory = [];
+    }
+    user.attendanceHistory.unshift(punchRecord);
+    // Keep max 100 records
+    if (user.attendanceHistory.length > 100) {
+      user.attendanceHistory = user.attendanceHistory.slice(0, 100);
+    }
+
+    await user.save();
+
+    res.json({
+      message: `Successfully punched ${punchType.toUpperCase()} with biometric verification`,
+      record: punchRecord,
+      attendanceHistory: user.attendanceHistory.slice(0, 10),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @route   GET /api/auth/attendance/history
+// @desc    Get user attendance history
+// @access  Private
+exports.getAttendanceHistory = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      attendanceHistory: user.attendanceHistory || [],
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

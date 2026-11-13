@@ -2,14 +2,33 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Target, DollarSign } from 'lucide-react';
+import { 
+  TrendingUp, Target, DollarSign, Camera, Fingerprint, FileText, 
+  MapPin, Sparkles, QrCode, ArrowUpRight, ShieldCheck, Clock, CheckCircle2 
+} from 'lucide-react';
 import api from '../services/api';
+import biometricService from '../services/biometricService';
+import BiometricModal from '../components/BiometricModal';
+import BusinessCardScannerModal from '../components/BusinessCardScannerModal';
+import QuotationModal from '../components/QuotationModal';
+import FieldVisitModal from '../components/FieldVisitModal';
+import DigitalCardModal from '../components/DigitalCardModal';
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
   const [metrics, setMetrics] = useState(null);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Modals state
+  const [showBiometricModal, setShowBiometricModal] = useState(false);
+  const [showCardScannerModal, setShowCardScannerModal] = useState(false);
+  const [showQuotationModal, setShowQuotationModal] = useState(false);
+  const [showFieldVisitModal, setShowFieldVisitModal] = useState(false);
+  const [showDigitalCardModal, setShowDigitalCardModal] = useState(false);
+
+  // Attendance state
+  const [attendance, setAttendance] = useState(() => biometricService.getStoredAttendanceState());
 
   useEffect(() => {
     fetchDashboardData();
@@ -82,8 +101,76 @@ function Dashboard() {
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Overview of your sales performance and metrics</p>
         </div>
-        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-gray-200/50 dark:border-slate-700/50 shadow-sm">
-          Active Session: <span className="text-blue-600 dark:text-blue-400">{user?.name}</span> ({user?.role})
+        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-gray-200/50 dark:border-slate-700/50 shadow-sm flex items-center gap-3">
+          <span>Active Session: <strong className="text-blue-600 dark:text-blue-400">{user?.name}</strong> ({user?.role})</span>
+          <span className="h-4 w-px bg-gray-200 dark:bg-slate-700" />
+          <button
+            type="button"
+            onClick={() => setShowBiometricModal(true)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+              attendance.isPunchedIn
+                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+            }`}
+          >
+            <Fingerprint size={13} />
+            <span>{attendance.isPunchedIn ? '🟢 Punched In' : '🔴 Punch In'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* BDA Quick Action Toolbar */}
+      <div className="bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 dark:from-slate-800/80 dark:to-slate-850/80 p-4 rounded-2xl border border-blue-500/20 dark:border-slate-700/60 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md">
+            <Sparkles size={16} />
+          </div>
+          <div>
+            <h3 className="text-xs font-extrabold text-gray-900 dark:text-white uppercase tracking-wider">
+              BDA Fast Action Center
+            </h3>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              One-click field tools, business card scanning, RFQs & biometric attendance
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCardScannerModal(true)}
+            className="py-2 px-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
+          >
+            <Camera size={14} />
+            <span>Scan Visiting Card</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowQuotationModal(true)}
+            className="py-2 px-3.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm transition flex items-center gap-1.5"
+          >
+            <FileText size={14} className="text-indigo-500" />
+            <span>Draft RFQ Quotation</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowFieldVisitModal(true)}
+            className="py-2 px-3.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm transition flex items-center gap-1.5"
+          >
+            <MapPin size={14} className="text-emerald-500" />
+            <span>Log Plant Visit</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowDigitalCardModal(true)}
+            className="py-2 px-3.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200 text-xs font-bold rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm transition flex items-center gap-1.5"
+          >
+            <QrCode size={14} className="text-cyan-500" />
+            <span>My Digital Card</span>
+          </button>
         </div>
       </div>
 
@@ -184,6 +271,46 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <BiometricModal
+        isOpen={showBiometricModal}
+        onClose={() => setShowBiometricModal(false)}
+        mode="attendance"
+        user={user}
+        onSuccess={(punchState) => {
+          setAttendance(punchState);
+        }}
+      />
+
+      <BusinessCardScannerModal
+        isOpen={showCardScannerModal}
+        onClose={() => setShowCardScannerModal(false)}
+        onLeadCreated={() => {
+          fetchDashboardData();
+        }}
+      />
+
+      <QuotationModal
+        isOpen={showQuotationModal}
+        onClose={() => setShowQuotationModal(false)}
+        user={user}
+      />
+
+      <FieldVisitModal
+        isOpen={showFieldVisitModal}
+        onClose={() => setShowFieldVisitModal(false)}
+        user={user}
+        onVisitLogged={() => {
+          fetchDashboardData();
+        }}
+      />
+
+      <DigitalCardModal
+        isOpen={showDigitalCardModal}
+        onClose={() => setShowDigitalCardModal(false)}
+        user={user}
+      />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 // frontend/src/pages/Communications.jsx
 import React, { useEffect, useState } from 'react';
-import { Plus, Phone, Mail, Calendar, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Phone, Mail, Calendar, Trash2, ArrowRight, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatDistanceToNow } from 'date-fns';
 import Modal from '../components/Modal';
+import FieldVisitModal from '../components/FieldVisitModal';
 
 function Communications() {
   const [communications, setCommunications] = useState([]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showVisitModal, setShowVisitModal] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -129,13 +131,22 @@ function Communications() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight">Communications Log</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">Track all customer calls, emails, presentations, and follow-ups.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition text-xs font-semibold hover-lift self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          <span>Log Interaction</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setShowVisitModal(true)}
+            className="flex items-center justify-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2.5 rounded-xl shadow-md transition text-xs font-semibold hover-lift"
+          >
+            <MapPin size={15} />
+            <span>Log Plant Visit</span>
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition text-xs font-semibold hover-lift"
+          >
+            <Plus size={16} />
+            <span>Log Interaction</span>
+          </button>
+        </div>
       </div>
 
       {/* Communications List */}
@@ -330,6 +341,15 @@ function Communications() {
           </form>
         </Modal>
       )}
+
+      {/* Field Visit Modal */}
+      <FieldVisitModal
+        isOpen={showVisitModal}
+        onClose={() => setShowVisitModal(false)}
+        onVisitLogged={() => {
+          fetchCommunications();
+        }}
+      />
     </div>
   );
 }

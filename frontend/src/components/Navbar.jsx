@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { clearAuth } from '../redux/slices/authSlice';
-import { Bell, LogOut, User, Settings, Sun, Moon, X } from 'lucide-react';
+import { Bell, LogOut, User, Settings, Sun, Moon, X, Fingerprint, Camera, Sparkles, MapPin } from 'lucide-react';
+import BiometricModal from './BiometricModal';
+import BusinessCardScannerModal from './BusinessCardScannerModal';
+import biometricService from '../services/biometricService';
 
 function Navbar() {
   const dispatch = useDispatch();
@@ -15,12 +18,29 @@ function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
+  // Modals
+  const [showBiometricModal, setShowBiometricModal] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
+
+  // Attendance punch state
+  const [attendance, setAttendance] = useState(() => biometricService.getStoredAttendanceState());
+
   // Simulated notification list
   const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New sales lead "Apex Solutions" assigned to you.', time: '5m ago', unread: true },
-    { id: 2, text: 'Follow-up discussion scheduled with John Doe today.', time: '1h ago', unread: true },
-    { id: 3, text: 'Pipeline value increased by +12% this week!', time: '1d ago', unread: false },
+    { id: 1, text: 'Biometric terminal ready: Hardware-backed encryption active.', time: 'Just now', unread: true },
+    { id: 2, text: 'New sales lead "Apex Solutions" assigned to you.', time: '5m ago', unread: true },
+    { id: 3, text: 'Follow-up discussion scheduled with John Doe today.', time: '1h ago', unread: false },
+    { id: 4, text: 'Pipeline value increased by +12% this week!', time: '1d ago', unread: false },
   ]);
+
+  useEffect(() => {
+    // Listen for storage changes across tabs
+    const handleStorage = () => {
+      setAttendance(biometricService.getStoredAttendanceState());
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -68,7 +88,39 @@ function Navbar() {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3 md:space-x-4">
+          
+          {/* Biometric Field Attendance Status Pill */}
+          <button
+            type="button"
+            onClick={() => setShowBiometricModal(true)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition ${
+              attendance.isPunchedIn
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20'
+            }`}
+            title="Click to Punch In / Punch Out with Biometrics"
+          >
+            <Fingerprint size={15} className={attendance.isPunchedIn ? 'text-emerald-500' : 'text-rose-500'} />
+            <span className="hidden md:inline">
+              {attendance.isPunchedIn ? 'Punched In' : 'Punch In Required'}
+            </span>
+            <span className={`w-2 h-2 rounded-full ${
+              attendance.isPunchedIn ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+            }`} />
+          </button>
+
+          {/* Quick Visiting Card Scanner Button */}
+          <button
+            type="button"
+            onClick={() => setShowScannerModal(true)}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs font-bold transition shadow-sm"
+            title="Scan Visiting Card / Document"
+          >
+            <Camera size={15} />
+            <span>Scan Card</span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -209,6 +261,26 @@ function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Global Modals for Quick Access */}
+      <BiometricModal
+        isOpen={showBiometricModal}
+        onClose={() => setShowBiometricModal(false)}
+        mode="attendance"
+        user={user}
+        onSuccess={(punchState) => {
+          setAttendance(punchState);
+        }}
+      />
+
+      <BusinessCardScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onLeadCreated={(newLead) => {
+          // If on leads page, can navigate or notify
+          navigate('/leads');
+        }}
+      />
     </nav>
   );
 }
