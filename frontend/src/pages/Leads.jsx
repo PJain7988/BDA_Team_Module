@@ -219,21 +219,21 @@ function Leads() {
   };
 
   return (
-    <div className="p-8 space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight">Leads Pipeline</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">Manage and track manufacturing sales opportunities across the funnel.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight">Leads Pipeline</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">Manage and track manufacturing sales opportunities across the funnel.</p>
         </div>
-        <div className="flex items-center space-x-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {/* Table / Kanban View Toggle */}
           <div className="flex bg-gray-200/60 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
             <button
               onClick={() => setViewMode('table')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-slate-700 text-blue-650 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
@@ -243,7 +243,7 @@ function Leads() {
               onClick={() => setViewMode('board')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 ${
                 viewMode === 'board'
-                  ? 'bg-white dark:bg-slate-700 text-blue-650 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
@@ -252,17 +252,17 @@ function Leads() {
           </div>
           <button
             onClick={handleExportCSV}
-            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl transition text-xs font-semibold shadow-sm"
+            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-xl transition text-xs font-semibold shadow-sm"
             title="Export CSV"
           >
-            <Download size={15} />
+            <Download size={14} />
           </button>
           <button
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
-            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2.5 rounded-xl transition text-xs font-semibold shadow-sm"
+            className="flex items-center justify-center space-x-1.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-xl transition text-xs font-semibold shadow-sm"
             title="Import CSV"
           >
-            <Upload size={15} />
+            <Upload size={14} />
           </button>
           <input
             type="file"
@@ -273,17 +273,17 @@ function Leads() {
           />
           <button
             onClick={() => setShowScannerModal(true)}
-            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-3.5 py-2.5 rounded-xl shadow-md transition hover-lift font-bold text-xs"
+            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-3 py-2 rounded-xl shadow-md transition font-bold text-xs"
             title="Scan Visiting Card with AI OCR"
           >
-            <Camera size={15} />
-            <span>Scan Card</span>
+            <Camera size={14} />
+            <span className="hidden sm:inline">Scan Card</span>
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-505 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition hover-lift font-semibold text-xs animate-none"
+            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 py-2 rounded-xl shadow-md transition font-semibold text-xs"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             <span>New Lead</span>
           </button>
         </div>
