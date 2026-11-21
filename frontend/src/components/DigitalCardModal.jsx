@@ -1,5 +1,6 @@
 // frontend/src/components/DigitalCardModal.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Smartphone, Download, Share2, Phone, Mail, Building, CheckCircle, X, QrCode } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -69,7 +70,7 @@ export default function DigitalCardModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn"
       onClick={(e) => {
@@ -151,6 +152,7 @@ export default function DigitalCardModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

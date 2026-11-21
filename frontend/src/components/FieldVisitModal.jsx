@@ -1,5 +1,6 @@
 // frontend/src/components/FieldVisitModal.jsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Building, Calendar, User, CheckCircle2, X, Star, FileText, Send, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import biometricService from '../services/biometricService';
@@ -123,7 +124,7 @@ export default function FieldVisitModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn"
       onClick={(e) => {
@@ -335,6 +336,7 @@ export default function FieldVisitModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

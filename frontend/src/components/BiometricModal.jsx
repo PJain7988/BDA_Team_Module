@@ -1,5 +1,6 @@
 // frontend/src/components/BiometricModal.jsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Fingerprint, Scan, ShieldCheck, MapPin, CheckCircle2, AlertCircle, X, RefreshCw, Smartphone, Sparkles } from 'lucide-react';
 import biometricService from '../services/biometricService';
 import authService from '../services/authService';
@@ -174,7 +175,7 @@ export default function BiometricModal({
     }
   };
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn"
       onClick={(e) => {
@@ -471,6 +472,7 @@ export default function BiometricModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

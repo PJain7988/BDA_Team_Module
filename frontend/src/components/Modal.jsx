@@ -1,5 +1,6 @@
 // frontend/src/components/Modal.jsx
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 function Modal({ isOpen, onClose, title, children, size = 'md' }) {
@@ -13,7 +14,7 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
     '2xl': 'max-w-2xl',
   };
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 bg-black/70 backdrop-blur-sm overflow-y-auto p-4 flex min-h-full items-start sm:items-center justify-center z-50 animate-fadeIn"
       onClick={(e) => {
@@ -38,7 +39,8 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

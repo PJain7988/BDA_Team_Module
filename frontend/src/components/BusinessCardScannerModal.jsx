@@ -1,5 +1,6 @@
 // frontend/src/components/BusinessCardScannerModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, Upload, Sparkles, Building2, User, Phone, Mail, Globe, MapPin, CheckCircle2, X, RefreshCw, ArrowRight, FileText, Zap } from 'lucide-react';
 import ocrScannerService, { SAMPLE_BUSINESS_CARDS } from '../services/ocrScannerService';
 import api from '../services/api';
@@ -193,7 +194,7 @@ export default function BusinessCardScannerModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn"
       onClick={(e) => {
@@ -551,6 +552,7 @@ export default function BusinessCardScannerModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

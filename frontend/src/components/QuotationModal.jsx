@@ -1,5 +1,6 @@
 // frontend/src/components/QuotationModal.jsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, Plus, Trash2, Printer, Send, X, Building, CheckCircle2, DollarSign, Calculator, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -135,7 +136,7 @@ export default function QuotationModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn print:p-0 print:bg-white"
       onClick={(e) => {
@@ -435,6 +436,7 @@ export default function QuotationModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
