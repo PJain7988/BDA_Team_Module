@@ -111,32 +111,35 @@ The BDA Team Module is a comprehensive **workflow management CRM** built for man
 ### Frontend
 | Technology | Purpose |
 |-----------|---------|
-| **React 18** | Component UI library |
-| **Redux Toolkit** | Global state management |
-| **React Router v6** | Client-side routing |
-| **Tailwind CSS v3** | Utility-first styling |
-| **Recharts** | Data visualization charts |
-| **React Beautiful DnD** | Kanban drag-and-drop |
-| **React Toastify** | Toast notifications |
-| **Axios** | HTTP client with interceptors |
-| **Socket.io Client** | Real-time updates |
-| **Lucide React** | Modern icon library |
-| **Vite** | Lightning-fast build tool |
+| **React 18** | Modern Component UI architecture with React Portals |
+| **@simplewebauthn/browser** | Hardware-backed biometric passkey authentication (TouchID, FaceID, Windows Hello) |
+| **Redux Toolkit** | Centralized global state management |
+| **React Router v6** | Client-side routing with SPA rewrite fallbacks |
+| **Tailwind CSS v3** | Responsive glassmorphism styling & mobile drawer layout |
+| **Recharts** | Interactive business telemetry & sales trend visualizations |
+| **React Beautiful DnD** | Smooth drag-and-drop Kanban pipeline board |
+| **React Toastify** | Real-time interactive feedback alerts |
+| **Axios** | HTTP client with automatic JWT token refresh interceptors |
+| **Socket.io Client** | Real-time WebSocket event listeners |
+| **Lucide React** | Sleek modern enterprise iconography |
+| **Vite** | High-performance bundling and compilation |
 
 ### Backend
 | Technology | Purpose |
 |-----------|---------|
-| **Node.js** | JavaScript runtime |
-| **Express.js** | Web framework |
-| **MongoDB Atlas** | Cloud NoSQL database |
-| **Mongoose** | MongoDB ODM |
-| **JWT** | Token-based authentication |
-| **Bcryptjs** | Password hashing |
-| **Socket.io** | Real-time WebSocket communication |
-| **Helmet** | HTTP security headers |
-| **Express Rate Limit** | API abuse protection |
-| **Morgan** | HTTP request logger |
-| **Compression** | Response gzip compression |
+| **Node.js & Express.js** | Production RESTful API server |
+| **@simplewebauthn/server** | FIDO2 / WebAuthn passkey registration & verification engine |
+| **Speakeasy & QRCode** | TOTP Two-Factor Authentication with QR setup & emergency codes |
+| **MongoDB Atlas** | Cloud-native multi-model NoSQL database |
+| **Mongoose** | Schema modeling with auto-seeding & indexing |
+| **JWT & Refresh Tokens** | Dual-token authentication with secure httpOnly cookies |
+| **Bcryptjs** | Strong salted password cryptography |
+| **Socket.io** | Bi-directional real-time event broadcasting |
+| **Helmet & HPP** | HTTP security hardening & HTTP parameter pollution prevention |
+| **Express Mongo Sanitize** | NoSQL query injection protection |
+| **Express Rate Limit** | Brute-force & DDoS attack mitigation with account lockout |
+| **Cookie Parser** | Secure server-side credential cookie handling |
+| **Morgan & Compression** | Enterprise request logging & Gzip payload compression |
 
 ### Deployment
 | Platform | Service |
@@ -588,9 +591,9 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 👨‍💻 Author
 
-**Prateek Jain** — Full-stack MERN Developer
+**Priya Jain** — Full-stack MERN Developer
 
-Built as a technical assessment project demonstrating production-grade full-stack development with React, Node.js, MongoDB, and real-time WebSocket capabilities.
+Built as a technical assessment and final year capstone project demonstrating production-grade full-stack development with React, Node.js, MongoDB, WebAuthn biometric security, and real-time WebSocket capabilities.
 
 ---
 
