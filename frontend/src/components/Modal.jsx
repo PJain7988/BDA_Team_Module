@@ -14,21 +14,27 @@ function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white rounded-lg shadow-xl ${sizeClasses[size]} w-full mx-4`}>
+    <div 
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm overflow-y-auto p-4 flex min-h-full items-start sm:items-center justify-center z-50 animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={`bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl ${sizeClasses[size]} w-full my-auto overflow-hidden`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition"
+            className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition"
+            title="Close"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
           {children}
         </div>
       </div>

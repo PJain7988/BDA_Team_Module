@@ -92,9 +92,9 @@ function Dashboard() {
   ];
 
   return (
-    <div className="p-8 space-y-8 bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 lg:space-y-8 bg-slate-50 dark:bg-slate-900 min-h-screen transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight flex items-center space-x-2">
             <span>Enterprise Dashboard</span>
@@ -175,7 +175,7 @@ function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {statsCards.map((stat, index) => {
           const Icon = stat.icon;
           return (

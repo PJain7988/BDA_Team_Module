@@ -123,31 +123,49 @@ export default function QuotationModal({
     window.open(`https://wa.me/${cleanPhone}?text=${summaryMsg}`, '_blank');
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn print:p-0 print:bg-white">
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[92vh] print:max-h-none print:border-none print:shadow-none print:bg-white print:text-black">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn print:p-0 print:bg-white"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col my-auto max-h-[calc(100vh-2rem)] sm:max-h-[92vh] print:max-h-none print:border-none print:shadow-none print:bg-white print:text-black">
         
         {/* Top Header - hidden on print */}
-        <div className="p-6 pb-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-950/40 to-slate-900 print:hidden">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <FileText size={20} className="text-white" />
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-950/60 to-slate-900 print:hidden flex-shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+              <FileText size={18} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Manufacturing Quotation & RFQ</span>
-                <span className="text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full border border-blue-500/30">
+                <span className="text-[9px] sm:text-[10px] bg-blue-500/20 text-blue-300 font-mono px-2 py-0.5 rounded-full border border-blue-500/30">
                   {quoteNumber}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Official commercial quotation for precision engineering & manufacturing orders
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-full transition"
+            className="p-1.5 sm:p-2 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700 rounded-full transition"
+            title="Close (Esc)"
           >
             <X size={18} />
           </button>

@@ -36,7 +36,7 @@ export default function BusinessCardScannerModal({
 
   const industries = ['Automotive', 'Textile', 'Food Processing', 'Pharmaceuticals', 'Electronics', 'Chemicals', 'Other'];
 
-  // Cleanup camera stream on close
+  // Cleanup camera stream on close & handle Escape key
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
@@ -44,7 +44,15 @@ export default function BusinessCardScannerModal({
       setIsScanning(false);
       setPreviewImage(null);
     }
-  }, [isOpen]);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const startCamera = async () => {
     try {
@@ -186,37 +194,43 @@ export default function BusinessCardScannerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col max-h-[90vh]">
+    <div 
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md p-3 sm:p-6 flex min-h-full items-start sm:items-center justify-center animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col my-auto max-h-[calc(100vh-2rem)] sm:max-h-[88vh]">
         
-        {/* Top Header */}
-        <div className="p-6 pb-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/40">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <Camera size={20} className="text-white" />
+        {/* Top Header - Sticky at top */}
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-950/60 via-slate-900 to-indigo-950/60 flex-shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+              <Camera size={18} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                <span>BDA Smart Business Card Scanner</span>
-                <span className="text-[10px] bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
+                <span>Smart Visiting Card Scanner</span>
+                <span className="text-[9px] sm:text-[10px] bg-blue-500/20 text-blue-300 font-semibold px-2 py-0.5 rounded-full border border-blue-500/30">
                   AI OCR
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">
-                Scan visiting cards from trade shows and plant visits to auto-create verified leads
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate max-w-xs sm:max-w-md">
+                1-click instant business card extraction into verified leads
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-full transition"
+            className="p-1.5 sm:p-2 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded-full transition flex-shrink-0"
+            title="Close (Esc)"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex border-b border-slate-800 px-6 pt-3 bg-slate-900/60 gap-3">
+        {/* Tab Selector - Sticky */}
+        <div className="flex border-b border-slate-800 px-4 sm:px-6 pt-2 sm:pt-3 bg-slate-900/90 gap-2 sm:gap-3 flex-shrink-0 overflow-x-auto">
           <button
             type="button"
             onClick={() => handleTabSwitch('presets')}
@@ -269,27 +283,27 @@ export default function BusinessCardScannerModal({
                   <Sparkles size={11} /> 1-Click Instant Parse
                 </span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {SAMPLE_BUSINESS_CARDS.map((card) => (
                   <div
                     key={card.id}
                     onClick={() => handleSelectPreset(card)}
-                    className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/60 hover:border-blue-500/80 hover:bg-slate-800/90 cursor-pointer transition duration-200 group relative overflow-hidden"
+                    className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-800/60 border border-slate-700/60 hover:border-blue-500/80 hover:bg-slate-800/90 cursor-pointer transition duration-200 group relative overflow-hidden"
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-white group-hover:text-blue-300 transition">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-white group-hover:text-blue-300 transition truncate block">
                           {card.label}
                         </span>
-                        <p className="text-[11px] text-slate-400 font-medium mt-1">
+                        <p className="text-[11px] text-slate-400 font-medium mt-0.5 truncate">
                           {card.contactName} • <span className="text-slate-300">{card.designation}</span>
                         </p>
                       </div>
-                      <span className="text-[10px] bg-slate-700 px-2 py-0.5 rounded-full text-slate-300">
+                      <span className="text-[10px] bg-slate-700/80 px-2 py-0.5 rounded-full text-slate-300 flex-shrink-0 font-mono">
                         ${card.dealValue.toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-2 truncate">
+                    <p className="text-[10px] text-slate-500 mt-1.5 truncate font-mono">
                       {card.email} • {card.phone}
                     </p>
                   </div>
