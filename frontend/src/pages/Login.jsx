@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../redux/slices/authSlice';
 import authService from '../services/authService';
+import biometricService from '../services/biometricService';
 import { 
   LogIn, KeyRound, ArrowLeft, Eye, EyeOff, Zap, Shield, BarChart3, 
   Users, Fingerprint, Sparkles, Mail, Lock, CheckCircle2, ArrowRight, 
-  ShieldCheck, MapPin, Camera, FileText, Activity, Globe, Cpu
+  ShieldCheck, MapPin, Camera, FileText, Activity, Globe, Cpu, AlertTriangle, QrCode
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import BiometricModal from '../components/BiometricModal';
@@ -88,11 +89,18 @@ function Login() {
   const [isForgot, setIsForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
   const [activeDemo, setActiveDemo] = useState(null);
-  const [demoFilter, setDemoFilter] = useState('All'); // 'All' | 'Leadership' | 'BDA'
+  const [demoFilter, setDemoFilter] = useState('All');
   const [showBiometricModal, setShowBiometricModal] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  
+  const [lockoutError, setLockoutError] = useState(null);
+
+  // 2FA Challenge state
+  const [show2FAChallenge, setShow2FAChallenge] = useState(false);
+  const [tempToken2FA, setTempToken2FA] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -103,15 +111,79 @@ function Login() {
       return;
     }
     setLoading(true);
+    setLockoutError(null);
     try {
       const result = await authService.login(email, password);
+
+      // Handle Two-Factor Authentication requirement
+      if (result.twoFactorRequired) {
+        setTempToken2FA(result.tempToken);
+        setShow2FAChallenge(true);
+        toast.info('Two-Factor Authentication required. Enter the 6-digit code from Google Authenticator.');
+        return;
+      }
+
       dispatch(setUser({ token: result.token, user: result.user }));
       toast.success(`Welcome back, ${result.user?.name}! 🎉`);
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Please verify credentials or try another demo account.');
+      if (error.response?.status === 423) {
+        setLockoutError(error.response.data.message);
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.response?.data?.message || 'Login failed. Please verify credentials or try another demo account.');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Submit 2FA code
+  const handleVerify2FACode = async (e) => {
+    e.preventDefault();
+    if (!totpCode || totpCode.trim().length < 6) {
+      toast.warn('Please enter a valid 6-digit code or backup code');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await authService.verify2FALogin(tempToken2FA, totpCode);
+      dispatch(setUser({ token: result.token, user: result.user }));
+      toast.success(`Identity Verified! Welcome back, ${result.user?.name}! 🔒`);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid 2FA verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Direct WebAuthn Passkey Login Trigger
+  const handlePasskeyLogin = async () => {
+    setBioLoading(true);
+    try {
+      // If WebAuthn is supported, trigger platform authenticator directly
+      if (biometricService.isWebAuthnSupported()) {
+        const result = await biometricService.loginWithPasskey(email);
+        if (result.twoFactorRequired) {
+          setTempToken2FA(result.tempToken);
+          setShow2FAChallenge(true);
+          toast.info('Two-Factor Authentication required.');
+          return;
+        }
+
+        dispatch(setUser({ token: result.token, user: result.user }));
+        toast.success(`Passkey Sign-In verified for ${result.user.name}! 🚀`);
+        navigate('/dashboard');
+      } else {
+        // Fallback to high-tech scanner modal
+        setShowBiometricModal(true);
+      }
+    } catch (error) {
+      console.warn('Direct passkey error, launching biometric terminal:', error.message);
+      setShowBiometricModal(true);
+    } finally {
+      setBioLoading(false);
     }
   };
 
@@ -134,6 +206,7 @@ function Login() {
     setEmail(cred.email);
     setPassword(cred.password);
     setActiveDemo(idx);
+    setLockoutError(null);
     toast.info(`Loaded ${cred.role} (${cred.name})`, { autoClose: 1500 });
   };
 
@@ -146,12 +219,10 @@ function Login() {
       
       {/* Dynamic Ambient Background Mesh */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Glow Spheres */}
         <div className="absolute -top-40 -left-40 w-[700px] h-[700px] bg-blue-600/15 rounded-full blur-[140px] animate-pulse" />
         <div className="absolute top-1/3 -right-40 w-[650px] h-[650px] bg-indigo-600/15 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
         <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] animate-pulse" style={{ animationDelay: '3.5s' }} />
         
-        {/* Subtle Architectural Grid Lines */}
         <div 
           className="absolute inset-0 opacity-[0.035]" 
           style={{
@@ -188,7 +259,7 @@ function Login() {
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-900/80 border border-slate-800 rounded-full text-[11px] text-slate-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Render Cloud + Vercel Edge Active</span>
+            <span>FIDO2 / WebAuthn & Refresh Tokens Active</span>
           </div>
           <a 
             href="https://github.com/PJain7988/BDA_Team_Module" 
@@ -205,7 +276,7 @@ function Login() {
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 py-8 lg:py-12 flex items-center">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 w-full items-center">
           
-          {/* LEFT COLUMN: Enterprise Value Showcase & Real-Time Telemetry Preview (Hidden on small mobile if needed) */}
+          {/* LEFT COLUMN: Enterprise Value Showcase */}
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-semibold uppercase tracking-wider">
@@ -218,134 +289,143 @@ function Login() {
               </h1>
               
               <p className="text-sm text-slate-400 leading-relaxed max-w-xl">
-                A unified workflow management platform for industrial sales teams. Featuring hardware-backed <strong className="text-slate-200">FIDO2 Biometric Attendance</strong>, instant <strong className="text-slate-200">AI Visiting Card OCR</strong>, and automated <strong className="text-slate-200">Manufacturing RFQ Quotations</strong>.
+                Integrated BDA execution platform with hardware biometric authentication, visiting card OCR ingestion, automated RFQ generation, geo-tagged visits, and live team pipeline synchronization.
               </p>
             </div>
 
-            {/* Interactive Telemetry Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Telemetry 1: Biometric Verification */}
-              <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-cyan-500/40 transition">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                    <Fingerprint size={16} />
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    HARDWARE ENCLAVE
-                  </span>
+            {/* High-Tech Telemetry Cards Grid */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-lg">
+              <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md hover:border-cyan-500/40 transition group">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-3 group-hover:scale-110 transition">
+                  <Fingerprint size={18} />
                 </div>
-                <h4 className="text-xs font-bold text-white">Biometric Geo-Punch</h4>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Touch ID, Face ID & Windows Hello with GPS site stamps for factory audits.
-                </p>
+                <h4 className="text-xs font-bold text-white mb-0.5">FIDO2 / Passkeys</h4>
+                <p className="text-[11px] text-slate-400">Touch ID, Face ID, Windows Hello & WebAuthn</p>
               </div>
 
-              {/* Telemetry 2: Smart Card OCR */}
-              <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 shadow-xl relative overflow-hidden group hover:border-blue-500/40 transition">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                    <Camera size={16} />
-                  </div>
-                  <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                    AI OCR 96.4%
-                  </span>
+              <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md hover:border-blue-500/40 transition group">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-3 group-hover:scale-110 transition">
+                  <Camera size={18} />
                 </div>
-                <h4 className="text-xs font-bold text-white">Visiting Card Scanner</h4>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Camera and photo upload to auto-extract company, contact & BOM deal values.
-                </p>
+                <h4 className="text-xs font-bold text-white mb-0.5">Card OCR Scanner</h4>
+                <p className="text-[11px] text-slate-400">1-click visiting card lead extraction</p>
               </div>
 
-              {/* Telemetry 3: Live Pipeline Stats */}
-              <div className="sm:col-span-2 p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/40 to-slate-900/90 border border-slate-800 shadow-xl flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-                    <BarChart3 size={20} />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                      Live Manufacturing Pipeline
-                    </span>
-                    <span className="text-lg font-black text-white font-mono">
-                      $1,420,000 <span className="text-xs font-normal text-emerald-400 font-sans">+24.8% SLA</span>
-                    </span>
-                  </div>
+              <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md hover:border-indigo-500/40 transition group">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 group-hover:scale-110 transition">
+                  <FileText size={18} />
                 </div>
-                <div className="hidden sm:block text-right">
-                  <span className="text-[10px] text-slate-400 block font-mono">18/20 Active BDAs</span>
-                  <span className="text-[10px] text-cyan-400 font-semibold">Peenya & Pune Clusters</span>
-                </div>
+                <h4 className="text-xs font-bold text-white mb-0.5">Quotation Generator</h4>
+                <p className="text-[11px] text-slate-400">Manufacturing RFQ proposals with tax calculation</p>
               </div>
-            </div>
 
-            {/* Compliance & Security Pills */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-slate-400">
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/60 rounded-lg border border-slate-800 text-[11px]">
-                <ShieldCheck size={13} className="text-cyan-400" />
-                256-Bit Hardware Encryption
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/60 rounded-lg border border-slate-800 text-[11px]">
-                <CheckCircle2 size={13} className="text-emerald-400" />
-                FIDO2 / WebAuthn Compliant
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-900/60 rounded-lg border border-slate-800 text-[11px]">
-                <Globe size={13} className="text-indigo-400" />
-                Multi-Region Cluster Routing
-              </span>
+              <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md hover:border-emerald-500/40 transition group">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 group-hover:scale-110 transition">
+                  <MapPin size={18} />
+                </div>
+                <h4 className="text-xs font-bold text-white mb-0.5">Field Geo-Attendance</h4>
+                <p className="text-[11px] text-slate-400">Biometric punch-in with live GPS verification</p>
+              </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Ultra-Clean Executive Authentication Panel */}
-          <div className="lg:col-span-6 w-full max-w-md mx-auto lg:max-w-none">
-            <div className="bg-slate-900/85 backdrop-blur-2xl border border-slate-800/80 rounded-3xl shadow-2xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300">
+          {/* RIGHT COLUMN: Modern Enterprise Login Terminal */}
+          <div className="lg:col-span-6 w-full max-w-md mx-auto">
+            <div className="relative rounded-3xl bg-slate-900/90 border border-slate-800/90 p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/80 space-y-6">
               
-              {/* Subtle Ambient Top Border Highlight */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600" />
+              {/* Account Lockout Warning Banner */}
+              {lockoutError && (
+                <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-2.5 text-xs text-rose-300">
+                  <AlertTriangle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block uppercase tracking-wider text-[10px]">Security Lockout Triggered</span>
+                    <p className="mt-0.5">{lockoutError}</p>
+                  </div>
+                </div>
+              )}
 
-              {!isForgot ? (
-                <div className="space-y-6">
-                  {/* Form Header */}
+              {/* 2FA Verification Challenge Step */}
+              {show2FAChallenge ? (
+                <form onSubmit={handleVerify2FACode} className="space-y-5 animate-fadeIn">
                   <div className="space-y-1">
-                    <h2 className="text-2xl font-black text-white tracking-tight">
-                      Sign In to Workspace
-                    </h2>
+                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-2">
+                      <QrCode size={22} />
+                    </div>
+                    <h2 className="text-xl font-black text-white tracking-tight">Two-Factor Authentication</h2>
                     <p className="text-xs text-slate-400">
-                      Enter your authorized credentials or use 1-Tap Biometric hardware login.
+                      Enter the 6-digit TOTP code generated by Google Authenticator or an emergency backup code.
                     </p>
                   </div>
 
-                  {/* HIGH-IMPACT: 1-Tap Biometric Authentication Button */}
+                  <div>
+                    <input
+                      type="text"
+                      maxLength={9}
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value)}
+                      placeholder="000000 or XXXX-XXXX"
+                      required
+                      autoFocus
+                      className="w-full text-center py-3 text-xl font-mono font-bold tracking-widest bg-slate-950 border border-cyan-500/40 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg transition"
+                  >
+                    {loading ? 'Validating Token...' : 'Verify 2FA & Enter Portal'}
+                  </button>
+
                   <button
                     type="button"
-                    onClick={() => setShowBiometricModal(true)}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-950/60 via-slate-900 to-blue-950/60 hover:from-cyan-900/50 hover:to-blue-900/50 border border-cyan-500/40 hover:border-cyan-400 shadow-lg shadow-cyan-500/10 transition-all duration-200 flex items-center justify-between group"
+                    onClick={() => { setShow2FAChallenge(false); setTotpCode(''); }}
+                    className="w-full text-center text-xs text-slate-400 hover:text-white"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition duration-200">
-                        <Fingerprint size={22} className="animate-pulse" />
+                    Back to Standard Login
+                  </button>
+                </form>
+              ) : !isForgot ? (
+                <div className="space-y-5">
+                  
+                  {/* Form Header */}
+                  <div className="space-y-1">
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      Enterprise Sign In
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Access your manufacturing CRM workspace and team dashboard.
+                    </p>
+                  </div>
+
+                  {/* Primary Biometric Passkey Button */}
+                  <button
+                    type="button"
+                    onClick={handlePasskeyLogin}
+                    disabled={bioLoading}
+                    className="w-full py-3 px-4 bg-slate-950 hover:bg-slate-800/80 border border-cyan-500/40 hover:border-cyan-400 rounded-2xl text-cyan-300 font-bold text-xs flex items-center justify-between transition group shadow-lg shadow-cyan-500/10"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition">
+                        <Fingerprint size={16} />
                       </div>
                       <div className="text-left">
-                        <span className="text-xs font-bold text-cyan-300 group-hover:text-cyan-200 block">
-                          Biometric Fast Sign-In
-                        </span>
-                        <span className="text-[10px] text-slate-400 block">
-                          Touch ID • Face ID • Windows Hello
-                        </span>
+                        <span className="block text-white font-bold leading-tight">Sign in with Passkey / Biometrics</span>
+                        <span className="text-[10px] text-slate-400 block font-normal">Touch ID &bull; Face ID &bull; Windows Hello</span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold bg-cyan-500/10 px-2 py-1 rounded-lg border border-cyan-500/20 group-hover:translate-x-1 transition duration-200">
-                      SCAN &rarr;
+                    <span className="text-[10px] font-mono bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/30 uppercase font-semibold">
+                      1-TAP
                     </span>
                   </button>
 
-                  <div className="relative flex items-center py-1">
-                    <div className="flex-grow border-t border-slate-800"></div>
-                    <span className="flex-shrink mx-3 text-[10px] uppercase font-bold text-slate-500 tracking-widest">
+                  {/* Divider */}
+                  <div className="relative flex items-center justify-center">
+                    <div className="border-t border-slate-800 w-full" />
+                    <span className="bg-slate-900 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest relative">
                       or use password
                     </span>
-                    <div className="flex-grow border-t border-slate-800"></div>
                   </div>
 
                   {/* Standard Credentials Form */}
@@ -444,7 +524,7 @@ function Login() {
                     </button>
                   </form>
 
-                  {/* QUICK DEMO LOGIN: Clean Segmented Grid (NO UGLY SCROLLBAR) */}
+                  {/* QUICK DEMO LOGIN: Clean Segmented Grid */}
                   <div className="pt-4 border-t border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
@@ -471,7 +551,7 @@ function Login() {
                       </div>
                     </div>
 
-                    {/* Clean 2-column or 3-column Persona Grid with NO scrollbar overflow */}
+                    {/* Clean 2-column or 3-column Persona Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {filteredDemoList.map((cred, idx) => {
                         const Icon = cred.icon;

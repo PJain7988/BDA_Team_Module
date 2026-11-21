@@ -3,6 +3,7 @@ const express = require('express');
 const {
   register,
   login,
+  refreshToken,
   getMe,
   updateProfile,
   logout,
@@ -19,6 +20,7 @@ const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/refresh', refreshToken);
 router.post('/biometric-login', biometricLogin);
 router.post('/biometric-register', auth, biometricRegister);
 router.post('/attendance/punch', auth, logAttendance);
@@ -27,6 +29,6 @@ router.get('/me', auth, getMe);
 router.put('/update-profile', auth, updateProfile);
 router.put('/change-password', auth, changePassword);
 router.post('/forgot-password', forgotPassword);
-router.post('/logout', auth, logout);
+router.post('/logout', logout);
 
 module.exports = router;

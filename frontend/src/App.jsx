@@ -15,6 +15,7 @@ import Analytics from './pages/Analytics';
 import Communications from './pages/Communications';
 import Profile from './pages/Profile';
 import BdaHub from './pages/BdaHub';
+import AuditLogs from './pages/AuditLogs';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -69,6 +70,7 @@ function App() {
                       <Route path="/team" element={<Team />} />
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/communications" element={<Communications />} />
+                      <Route path="/audit-logs" element={<AuditLogs />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/" element={<Navigate to="/dashboard" />} />
                     </Routes>

@@ -58,6 +58,33 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockoutUntil: {
+      type: Date,
+      default: null,
+    },
+    currentChallenge: {
+      type: String,
+      default: null,
+    },
+    totpEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    totpSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    backupCodes: [
+      {
+        codeHash: { type: String, required: true },
+        used: { type: Boolean, default: false },
+      },
+    ],
     attendanceHistory: [
       {
         punchType: { type: String, enum: ['in', 'out'], default: 'in' },
@@ -102,10 +129,13 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Method to get user data without password
+// Method to get user data without sensitive security fields
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
+  delete user.totpSecret;
+  delete user.currentChallenge;
+  delete user.backupCodes;
   return user;
 };
 

@@ -8,10 +8,15 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const compression = require('compression');
+const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
+const hpp = require('hpp');
 const connectDB = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 // ── Environment Variables ──────────────────────────────────────
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
 
 // ── Express App ────────────────────────────────────────────────
@@ -88,9 +93,14 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// ── Body Parsers ───────────────────────────────────────────────
+// ── Body & Cookie Parsers ───────────────────────────────────────
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
+app.use(cookieParser());
+
+// ── Security Hardening: Mongo Sanitize & HPP ────────────────────
+app.use(mongoSanitize());
+app.use(hpp());
 
 // ── API Information ────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -104,6 +114,9 @@ app.get('/', (req, res) => {
     endpoints: {
       health:    `${req.protocol}://${req.get('host')}/api/health`,
       auth:      `${req.protocol}://${req.get('host')}/api/auth`,
+      webauthn:  `${req.protocol}://${req.get('host')}/api/auth/webauthn`,
+      totp2fa:   `${req.protocol}://${req.get('host')}/api/auth/2fa`,
+      auditLogs: `${req.protocol}://${req.get('host')}/api/audit-logs`,
       leads:     `${req.protocol}://${req.get('host')}/api/leads`,
       team:      `${req.protocol}://${req.get('host')}/api/team`,
       analytics: `${req.protocol}://${req.get('host')}/api/analytics`,
@@ -130,6 +143,9 @@ app.get('/api/health', (req, res) => {
 
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/auth',           authLimiter, require('./routes/auth'));
+app.use('/api/auth/webauthn',  authLimiter, require('./routes/webauthn'));
+app.use('/api/auth/2fa',       authLimiter, require('./routes/totp'));
+app.use('/api/audit-logs',     require('./routes/audit'));
 app.use('/api/leads',          require('./routes/leads'));
 app.use('/api/team',           require('./routes/team'));
 app.use('/api/communications', require('./routes/communications'));

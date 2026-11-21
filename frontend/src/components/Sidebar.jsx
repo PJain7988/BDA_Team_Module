@@ -1,7 +1,7 @@
 // frontend/src/components/Sidebar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Fingerprint } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Fingerprint, Shield } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/slices/authSlice';
 
@@ -17,6 +17,7 @@ function Sidebar() {
     { path: '/leads', label: 'Leads', icon: Briefcase, description: 'Manage pipeline' },
     ...(user?.role !== 'BDA' ? [{ path: '/team', label: 'Team', icon: Users, description: 'Team members' }] : []),
     ...(user?.role !== 'BDA' ? [{ path: '/analytics', label: 'Analytics', icon: BarChart3, description: 'Performance data' }] : []),
+    ...(user?.role === 'Manager' ? [{ path: '/audit-logs', label: 'Audit Logs', icon: Shield, description: 'Compliance & security', badge: 'SEC' }] : []),
     { path: '/communications', label: 'Comms', icon: MessageSquare, description: 'Client logs' },
   ];
 
