@@ -55,8 +55,6 @@ export default function QuotationModal({
     }
   }, [isOpen, lead]);
 
-  if (!isOpen) return null;
-
   const handleAddItem = () => {
     setItems([
       ...items,
@@ -402,7 +400,7 @@ export default function QuotationModal({
         </div>
 
         {/* Footer Actions - hidden on print */}
-        <div className="p-6 pt-4 border-t border-slate-800 flex items-center justify-between bg-slate-900 print:hidden">
+        <div className="p-4 sm:p-6 pt-3 sm:pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-900 print:hidden flex-shrink-0">
           <div className="flex items-center gap-2">
             <button
               type="button"

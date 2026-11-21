@@ -9,8 +9,6 @@ export default function DigitalCardModal({
   onClose,
   user = null,
 }) {
-  if (!isOpen) return null;
-
   const bdaName = user?.name || 'Alex Johnson';
   const bdaRole = user?.role === 'Manager' ? 'Sales Director' : user?.role === 'TeamLead' ? 'Team Lead - BDA' : 'Business Development Associate';
   const bdaEmail = user?.email || 'alex.bda@mfg.com';
