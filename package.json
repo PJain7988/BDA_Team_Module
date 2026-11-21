@@ -2,6 +2,11 @@
   "name": "bda-module-root",
   "version": "1.0.0",
   "description": "Root orchestrator and dependencies configuration for Vercel deployment",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "vercel-build": "cd frontend && npm install && npm run build",
+    "start": "node backend/server.js"
+  },
   "dependencies": {
     "@simplewebauthn/server": "^14.1.0",
     "bcryptjs": "^2.4.3",

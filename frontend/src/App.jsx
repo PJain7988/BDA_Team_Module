@@ -105,7 +105,8 @@ function MainLayout() {
             <Route path="/communications" element={<Communications />} />
             <Route path="/audit-logs" element={<AuditLogs />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>
