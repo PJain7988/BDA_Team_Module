@@ -16,6 +16,7 @@ import Communications from './pages/Communications';
 import Profile from './pages/Profile';
 import BdaHub from './pages/BdaHub';
 import AuditLogs from './pages/AuditLogs';
+import Attendance from './pages/Attendance';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -65,6 +66,7 @@ function App() {
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/bda-hub" element={<BdaHub />} />
+                      <Route path="/attendance" element={<Attendance />} />
                       <Route path="/leads" element={<Leads />} />
                       <Route path="/leads/:id" element={<LeadDetail />} />
                       <Route path="/team" element={<Team />} />

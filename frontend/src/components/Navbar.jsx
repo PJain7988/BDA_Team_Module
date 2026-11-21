@@ -7,6 +7,7 @@ import { Bell, LogOut, User, Settings, Sun, Moon, X, Fingerprint, Camera, Sparkl
 import BiometricModal from './BiometricModal';
 import BusinessCardScannerModal from './BusinessCardScannerModal';
 import biometricService from '../services/biometricService';
+import attendanceService from '../services/attendanceService';
 
 function Navbar() {
   const dispatch = useDispatch();
@@ -34,9 +35,24 @@ function Navbar() {
   ]);
 
   useEffect(() => {
+    // Fetch live attendance from backend
+    const syncAttendance = async () => {
+      try {
+        const data = await attendanceService.getToday();
+        setAttendance({
+          isPunchedIn: data.isPunchedIn,
+          todayMinutes: data.activeMinutes,
+          record: data.record,
+        });
+      } catch (e) {
+        setAttendance(biometricService.getStoredAttendanceState());
+      }
+    };
+    syncAttendance();
+
     // Listen for storage changes across tabs
     const handleStorage = () => {
-      setAttendance(biometricService.getStoredAttendanceState());
+      syncAttendance();
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);

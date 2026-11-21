@@ -1,7 +1,7 @@
 // frontend/src/components/Sidebar.jsx
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Fingerprint, Shield } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, Fingerprint, Shield, Clock } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/slices/authSlice';
 
@@ -14,6 +14,7 @@ function Sidebar() {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Overview & KPIs' },
     { path: '/bda-hub', label: 'BDA Hub', icon: Sparkles, description: 'Field, Scan & RFQ', badge: 'NEW' },
+    { path: '/attendance', label: 'Attendance', icon: Clock, description: 'Biometric punch & roster', badge: 'BIO' },
     { path: '/leads', label: 'Leads', icon: Briefcase, description: 'Manage pipeline' },
     ...(user?.role !== 'BDA' ? [{ path: '/team', label: 'Team', icon: Users, description: 'Team members' }] : []),
     ...(user?.role !== 'BDA' ? [{ path: '/analytics', label: 'Analytics', icon: BarChart3, description: 'Performance data' }] : []),

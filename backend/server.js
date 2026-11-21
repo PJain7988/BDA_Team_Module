@@ -114,10 +114,11 @@ app.get('/', (req, res) => {
     endpoints: {
       health:    `${req.protocol}://${req.get('host')}/api/health`,
       auth:      `${req.protocol}://${req.get('host')}/api/auth`,
-      webauthn:  `${req.protocol}://${req.get('host')}/api/auth/webauthn`,
-      totp2fa:   `${req.protocol}://${req.get('host')}/api/auth/2fa`,
-      auditLogs: `${req.protocol}://${req.get('host')}/api/audit-logs`,
-      leads:     `${req.protocol}://${req.get('host')}/api/leads`,
+      webauthn:   `${req.protocol}://${req.get('host')}/api/auth/webauthn`,
+      totp2fa:    `${req.protocol}://${req.get('host')}/api/auth/2fa`,
+      attendance: `${req.protocol}://${req.get('host')}/api/attendance`,
+      auditLogs:  `${req.protocol}://${req.get('host')}/api/audit-logs`,
+      leads:      `${req.protocol}://${req.get('host')}/api/leads`,
       team:      `${req.protocol}://${req.get('host')}/api/team`,
       analytics: `${req.protocol}://${req.get('host')}/api/analytics`,
       comms:     `${req.protocol}://${req.get('host')}/api/communications`,
@@ -145,6 +146,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth',           authLimiter, require('./routes/auth'));
 app.use('/api/auth/webauthn',  authLimiter, require('./routes/webauthn'));
 app.use('/api/auth/2fa',       authLimiter, require('./routes/totp'));
+app.use('/api/attendance',     require('./routes/attendance'));
 app.use('/api/audit-logs',     require('./routes/audit'));
 app.use('/api/leads',          require('./routes/leads'));
 app.use('/api/team',           require('./routes/team'));

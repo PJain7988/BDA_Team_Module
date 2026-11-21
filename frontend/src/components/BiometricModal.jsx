@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Fingerprint, Scan, ShieldCheck, MapPin, CheckCircle2, AlertCircle, X, RefreshCw, Smartphone, Sparkles } from 'lucide-react';
 import biometricService from '../services/biometricService';
 import authService from '../services/authService';
+import attendanceService from '../services/attendanceService';
 import { toast } from 'react-toastify';
 
 export default function BiometricModal({
@@ -108,18 +109,24 @@ export default function BiometricModal({
             onClose();
           }, 900);
         } else {
-          // Attendance Punch In / Out
-          const payload = {
-            punchType,
-            location: geoData,
-            notes: notes || `Biometric punch-${punchType} verified via ${scanType}`,
-          };
-
+          // Dedicated Attendance checkIn / checkOut API
           try {
-            await authService.logAttendance(payload);
+            if (punchType === 'in') {
+              await attendanceService.checkIn({
+                method: 'biometric',
+                deviceName: navigator.userAgent.includes('Mac') ? 'MacBook Touch ID' : 'Windows Hello Platform Sensor',
+                location: geoData,
+                notes: notes || `Biometric punch-in verified via ${scanType}`,
+                verifiedByWebAuthn: true,
+              });
+            } else {
+              await attendanceService.checkOut({
+                location: geoData,
+                notes: notes || `Biometric punch-out verified via ${scanType}`,
+              });
+            }
           } catch (e) {
-            // Local fallback if offline or backend cold
-            console.warn('Backend sync fallback to local storage', e);
+            console.warn('Backend attendance fallback', e);
           }
 
           // Update local attendance state

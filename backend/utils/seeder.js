@@ -3,12 +3,80 @@ const User = require('../models/User');
 const Team = require('../models/Team');
 const Lead = require('../models/Lead');
 const Communication = require('../models/Communication');
+const Attendance = require('../models/Attendance');
+
+const seedAttendance = async (users) => {
+  try {
+    const attCount = await Attendance.countDocuments();
+    if (attCount > 0) return;
+
+    console.log('🕒 Seeding 14 days of biometric attendance records for BDA team...');
+    const records = [];
+    const now = new Date();
+
+    for (let dayOffset = 14; dayOffset >= 0; dayOffset--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - dayOffset);
+      d.setHours(0, 0, 0, 0);
+
+      // Skip Sundays (day 0)
+      if (d.getDay() === 0) continue;
+
+      for (const u of users) {
+        // 85% chance present, 10% late, 5% absent
+        const rand = Math.random();
+        if (rand < 0.05) continue; // Absent
+
+        const isLate = rand >= 0.05 && rand < 0.20;
+        const checkInHour = isLate ? 9 : 8;
+        const checkInMin = isLate ? Math.floor(Math.random() * 25) + 35 : Math.floor(Math.random() * 30) + 45;
+
+        const checkIn = new Date(d);
+        checkIn.setHours(checkInHour, checkInMin, 0, 0);
+
+        const checkOut = new Date(d);
+        checkOut.setHours(17 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 50), 0, 0);
+
+        const durationMinutes = Math.round((checkOut - checkIn) / 60000);
+
+        records.push({
+          userId: u._id,
+          date: d,
+          checkIn,
+          checkOut,
+          method: 'biometric',
+          deviceName: u.role === 'Manager' ? 'MacBook Touch ID' : 'Windows Hello Platform Sensor',
+          location: {
+            latitude: 12.9716 + (Math.random() - 0.5) * 0.05,
+            longitude: 77.5946 + (Math.random() - 0.5) * 0.05,
+            address: 'Manufacturing Cluster Site 4, Bangalore',
+            accuracy: 12,
+          },
+          status: isLate ? 'Late' : 'Present',
+          isLate,
+          durationMinutes,
+          verifiedByWebAuthn: true,
+          notes: isLate ? 'Slight client transit delay' : 'Biometric shift verified',
+        });
+      }
+    }
+
+    if (records.length > 0) {
+      await Attendance.insertMany(records);
+      console.log(`✅ Seeded ${records.length} biometric attendance records.`);
+    }
+  } catch (e) {
+    console.warn('Attendance seed notice:', e.message);
+  }
+};
 
 const seedDB = async () => {
   try {
     const userCount = await User.countDocuments();
     if (userCount > 0) {
-      console.log('📊 Database already populated, skipping seed.');
+      console.log('📊 Database already populated, checking attendance seed...');
+      const existingUsers = await User.find();
+      await seedAttendance(existingUsers);
       return;
     }
 
