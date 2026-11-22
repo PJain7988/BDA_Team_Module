@@ -61,6 +61,14 @@ const attendanceSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    photoSnapshot: {
+      type: String,
+      default: '',
+    },
+    punchTimestamp: {
+      type: String,
+      default: '',
+    },
     notes: {
       type: String,
       default: '',

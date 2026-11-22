@@ -16,6 +16,7 @@ export default function BusinessCardScannerModal({
   const [scanComplete, setScanComplete] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [scanTimestamp, setScanTimestamp] = useState('');
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -92,6 +93,10 @@ export default function BusinessCardScannerModal({
     }
   };
 
+  const formatNowTime = () => {
+    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) + ' IST, ' + new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
   // Capture snapshot from webcam
   const handleCaptureSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -103,6 +108,7 @@ export default function BusinessCardScannerModal({
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg');
     setPreviewImage(dataUrl);
+    setScanTimestamp(formatNowTime());
     stopCamera();
     triggerOCR(SAMPLE_BUSINESS_CARDS[0]);
   };
@@ -113,6 +119,7 @@ export default function BusinessCardScannerModal({
     if (!file) return;
 
     setIsScanning(true);
+    setScanTimestamp(formatNowTime());
     try {
       const result = await ocrScannerService.processImageFile(file);
       setPreviewImage(result.imageUrl);
@@ -133,6 +140,7 @@ export default function BusinessCardScannerModal({
   const handleSelectPreset = (preset) => {
     setIsScanning(true);
     setPreviewImage(null);
+    setScanTimestamp(formatNowTime());
     setTimeout(() => {
       setLeadData({
         companyName: preset.companyName,
@@ -270,8 +278,8 @@ export default function BusinessCardScannerModal({
           </button>
         </div>
 
-        {/* Modal Body: Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Modal Body: Scrollable with min-h-0 to avoid footer clipping */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           
           {/* Tab 1: Instant Demo Presets */}
           {activeTab === 'presets' && !scanComplete && (
@@ -383,6 +391,31 @@ export default function BusinessCardScannerModal({
           {/* Extracted Form Details Preview */}
           {scanComplete && (
             <form onSubmit={handleCreateLead} className="space-y-4 animate-fadeIn">
+              {/* Photo Preview & Timestamp Banner */}
+              {previewImage && (
+                <div className="relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950 flex flex-col sm:flex-row items-center gap-3 p-2.5">
+                  <img
+                    src={previewImage}
+                    alt="Scanned Visiting Card"
+                    className="h-20 w-32 object-cover rounded-lg border border-slate-800 shadow"
+                  />
+                  <div className="text-left text-xs min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                      <CheckCircle2 size={13} />
+                      <span>Card Image Captured & OCR Processed</span>
+                    </div>
+                    {scanTimestamp && (
+                      <p className="text-[11px] text-cyan-300 font-mono mt-0.5">
+                        Scanned at: {scanTimestamp}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                      Extracted to verified CRM lead structure
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-emerald-300 text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-emerald-400" />

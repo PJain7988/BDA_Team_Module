@@ -34,7 +34,13 @@ exports.checkIn = async (req, res) => {
       location,
       notes = '',
       verifiedByWebAuthn = true,
+      photo = '',
+      photoSnapshot = '',
+      punchTime = '',
     } = req.body;
+
+    const snapshot = photo || photoSnapshot || '';
+    const formattedPunchTime = punchTime || now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     let attendance = await Attendance.findOne({ userId, date: today });
 
@@ -50,6 +56,8 @@ exports.checkIn = async (req, res) => {
       if (location) attendance.location = location;
       attendance.notes = notes || attendance.notes;
       attendance.verifiedByWebAuthn = verifiedByWebAuthn;
+      if (snapshot) attendance.photoSnapshot = snapshot;
+      attendance.punchTimestamp = formattedPunchTime;
       await attendance.save();
     } else {
       // First check-in of the day
@@ -68,21 +76,8 @@ exports.checkIn = async (req, res) => {
         status,
         isLate,
         verifiedByWebAuthn,
-        notes,
-      });
-    }
-        checkIn: now,
-        method,
-        deviceName,
-        location: location || {
-          latitude: 12.9716,
-          longitude: 77.5946,
-          address: 'Manufacturing Cluster Site 4',
-          accuracy: 15,
-        },
-        status,
-        isLate,
-        verifiedByWebAuthn,
+        photoSnapshot: snapshot,
+        punchTimestamp: formattedPunchTime,
         notes,
       });
     }
@@ -139,7 +134,9 @@ exports.checkOut = async (req, res) => {
     const now = new Date();
     const today = getStartOfDay(now);
 
-    const { location, notes = '' } = req.body;
+    const { location, notes = '', photo = '', photoSnapshot = '', punchTime = '' } = req.body;
+    const snapshot = photo || photoSnapshot || '';
+    const formattedPunchTime = punchTime || now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
     let attendance = await Attendance.findOne({ userId, date: today });
     if (!attendance) {
@@ -160,12 +157,16 @@ exports.checkOut = async (req, res) => {
           address: 'Manufacturing Cluster Site 4',
           accuracy: 15,
         },
+        photoSnapshot: snapshot,
+        punchTimestamp: formattedPunchTime,
         notes: notes || 'Biometric Punch-Out session',
       });
     } else {
       attendance.checkOut = now;
       if (location) attendance.checkOutLocation = location;
       if (notes) attendance.notes = (attendance.notes ? `${attendance.notes}; ` : '') + notes;
+      if (snapshot) attendance.photoSnapshot = snapshot;
+      attendance.punchTimestamp = formattedPunchTime;
 
       // Compute duration in minutes
       const duration = Math.round((now - attendance.checkIn) / 60000);
@@ -335,6 +336,8 @@ exports.getTeamAttendance = async (req, res) => {
           deviceName: att.deviceName,
           location: att.location,
           durationMinutes: att.durationMinutes,
+          photoSnapshot: att.photoSnapshot || '',
+          punchTimestamp: att.punchTimestamp || '',
           hasRecord: true,
           attendanceId: att._id,
         };

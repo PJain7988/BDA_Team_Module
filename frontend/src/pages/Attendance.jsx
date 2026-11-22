@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import {
   Clock, Fingerprint, MapPin, Calendar, Users, TrendingUp,
   Download, CheckCircle2, AlertTriangle, XCircle, Search,
-  RefreshCw, BarChart2, ShieldCheck, Zap, ArrowRight, Play, Square
+  RefreshCw, BarChart2, ShieldCheck, Zap, ArrowRight, Play, Square, Camera
 } from 'lucide-react';
 import attendanceService from '../services/attendanceService';
 import biometricService from '../services/biometricService';
@@ -148,43 +148,9 @@ export default function Attendance() {
     setShowBioModal(true);
   };
 
-  // Direct Quick Punch
-  const handleQuickPunch = async () => {
-    const isPunchedIn = todayState.isPunchedIn;
-    setPunchLoading(true);
-    try {
-      biometricService.audio.playScanTone();
-      const loc = currentLocation || await biometricService.getCurrentLocation();
-
-      if (isPunchedIn) {
-        // Punch Out
-        const res = await attendanceService.checkOut({
-          location: loc,
-          notes: 'Biometric Check-Out via Attendance Station',
-        });
-        biometricService.audio.playSuccessTone();
-        toast.success(res.message);
-      } else {
-        // Punch In
-        const res = await attendanceService.checkIn({
-          method: 'biometric',
-          deviceName: navigator.userAgent.includes('Mac') ? 'MacBook Touch ID' : 'Windows Hello Platform Sensor',
-          location: loc,
-          notes: 'Biometric Check-In via Attendance Station',
-          verifiedByWebAuthn: true,
-        });
-        biometricService.audio.playSuccessTone();
-        toast.success(res.message);
-      }
-      fetchTodayState();
-      if (activeTab === 'roster') fetchTeamRoster();
-      if (activeTab === 'my-history') fetchMyHistory();
-    } catch (err) {
-      biometricService.audio.playErrorTone();
-      toast.error(err.response?.data?.message || err.message || 'Punch failed');
-    } finally {
-      setPunchLoading(false);
-    }
+  // Direct Quick Punch opens live camera face terminal
+  const handleQuickPunch = () => {
+    setShowBioModal(true);
   };
 
   // Export CSV
@@ -468,9 +434,22 @@ export default function Attendance() {
                       <tr key={member.userId} className="hover:bg-gray-50/60 dark:hover:bg-slate-700/30 transition">
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
-                              {member.name.charAt(0)}
-                            </div>
+                            {member.photoSnapshot ? (
+                              <div className="relative group flex-shrink-0">
+                                <img
+                                  src={member.photoSnapshot}
+                                  alt={member.name}
+                                  className="w-9 h-9 rounded-xl object-cover border-2 border-emerald-500 shadow-sm"
+                                />
+                                <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 shadow">
+                                  <Camera size={9} />
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                {member.name.charAt(0)}
+                              </div>
+                            )}
                             <div>
                               <span className="font-bold text-gray-900 dark:text-white block">{member.name}</span>
                               <span className="text-[10px] text-gray-400 block">{member.email}</span>
@@ -489,9 +468,12 @@ export default function Attendance() {
 
                         <td className="py-3 px-4 whitespace-nowrap">
                           {member.checkIn ? (
-                            <span className="font-mono text-xs text-gray-900 dark:text-white font-semibold">
-                              {new Date(member.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+                            <div>
+                              <span className="font-mono text-xs text-gray-900 dark:text-white font-semibold block">
+                                {member.punchTimestamp || new Date(member.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                              </span>
+                              <span className="text-[9px] text-emerald-500 font-mono font-medium">Verified Face Photo</span>
+                            </div>
                           ) : (
                             <span className="text-gray-400 text-xs">—</span>
                           )}
@@ -758,13 +740,27 @@ export default function Attendance() {
                     myHistory.records.map((r) => (
                       <tr key={r._id} className="hover:bg-gray-50/60 dark:hover:bg-slate-700/30">
                         <td className="py-3 px-4 font-mono font-semibold text-gray-900 dark:text-white">
-                          {new Date(r.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          <div className="flex items-center gap-2">
+                            {r.photoSnapshot && (
+                              <img
+                                src={r.photoSnapshot}
+                                alt="Selfie"
+                                className="w-7 h-7 rounded-lg object-cover border border-emerald-500 shadow-xs flex-shrink-0"
+                              />
+                            )}
+                            <span>{new Date(r.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           {getStatusBadge(r.status, r.isLate)}
                         </td>
                         <td className="py-3 px-4 font-mono">
-                          {r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          {r.checkIn ? (
+                            <div>
+                              <span>{r.punchTimestamp || new Date(r.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                              <span className="text-[9px] text-emerald-500 block font-sans">Face Verified</span>
+                            </div>
+                          ) : '—'}
                         </td>
                         <td className="py-3 px-4 font-mono">
                           {r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active'}
