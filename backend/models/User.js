@@ -29,6 +29,12 @@ const userSchema = new mongoose.Schema(
       enum: ['BDA', 'TeamLead', 'Manager'],
       default: 'BDA',
     },
+    employeeId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     phone: {
       type: String,
       match: [/^[0-9]{10}$/, 'Please provide a valid phone number'],

@@ -31,6 +31,22 @@ const auth = async (req, res, next) => {
 
 const protect = auth;
 
+// Optional authentication (populates req.user if valid token exists)
+const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      const secret = process.env.JWT_SECRET || 'bda_team_module_default_secret_key_2026';
+      const decoded = jwt.verify(token, secret);
+      const user = await User.findById(decoded.id);
+      if (user && user.isActive) {
+        req.user = user;
+      }
+    }
+  } catch (e) {}
+  next();
+};
+
 // Check user role
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -41,4 +57,4 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { auth, protect, authorize };
+module.exports = { auth, protect, authorize, optionalAuth };

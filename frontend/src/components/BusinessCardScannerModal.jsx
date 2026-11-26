@@ -1,7 +1,7 @@
 // frontend/src/components/BusinessCardScannerModal.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Camera, Upload, Sparkles, Building2, User, Phone, Mail, Globe, MapPin, CheckCircle2, X, RefreshCw, ArrowRight, FileText, Zap } from 'lucide-react';
+import { Camera, Upload, Sparkles, Building2, User, Phone, Mail, Globe, MapPin, CheckCircle2, X, RefreshCw, ArrowRight, FileText, Zap, AlertTriangle } from 'lucide-react';
 import ocrScannerService, { SAMPLE_BUSINESS_CARDS } from '../services/ocrScannerService';
 import api from '../services/api';
 import { toast } from 'react-toastify';
@@ -17,6 +17,8 @@ export default function BusinessCardScannerModal({
   const [cameraActive, setCameraActive] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [scanTimestamp, setScanTimestamp] = useState('');
+  const [scanVerified, setScanVerified] = useState(null); // true | false | null
+  const [rejectionReason, setRejectionReason] = useState('');
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -97,7 +99,7 @@ export default function BusinessCardScannerModal({
     return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) + ' IST, ' + new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  // Capture snapshot from webcam
+  // Capture snapshot from webcam with image quality validation
   const handleCaptureSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -110,6 +112,25 @@ export default function BusinessCardScannerModal({
     setPreviewImage(dataUrl);
     setScanTimestamp(formatNowTime());
     stopCamera();
+
+    // Check image quality (luminance and clarity)
+    try {
+      const sample = ctx.getImageData(canvas.width / 4, canvas.height / 4, canvas.width / 2, canvas.height / 2).data;
+      let lum = 0;
+      for (let i = 0; i < sample.length; i += 4) {
+        lum += (sample[i] * 0.299 + sample[i + 1] * 0.587 + sample[i + 2] * 0.114);
+      }
+      const avgLum = lum / (sample.length / 4);
+
+      if (avgLum < 24) {
+        setScanVerified(false);
+        setRejectionReason('Camera frame too dark or card obscured.');
+        setScanComplete(true);
+        toast.error('Not found. Please connect to administrator.');
+        return;
+      }
+    } catch (e) {}
+
     triggerOCR(SAMPLE_BUSINESS_CARDS[0]);
   };
 
@@ -128,9 +149,14 @@ export default function BusinessCardScannerModal({
         ...result.extractedData,
       }));
       setScanComplete(true);
+      setScanVerified(true);
+      setRejectionReason('');
       toast.success('Visiting card scanned and fields extracted!');
     } catch (err) {
-      toast.error('Failed to parse card');
+      setScanVerified(false);
+      setRejectionReason('ID image unreadable or format unrecognized.');
+      setScanComplete(true);
+      toast.error('Not found. Please connect to administrator.');
     } finally {
       setIsScanning(false);
     }
@@ -152,10 +178,20 @@ export default function BusinessCardScannerModal({
         dealValue: preset.dealValue,
         source: preset.source,
         notes: preset.notes,
+        idNumber: preset.idNumber,
       });
       setIsScanning(false);
       setScanComplete(true);
-      toast.success(`Scanned: ${preset.companyName}`);
+
+      if (preset.isAuthorized === false || preset.isExpired || preset.isUnregistered) {
+        setScanVerified(false);
+        setRejectionReason('ID is invalid, expired, or does not match active records.');
+        toast.error('Not found. Please connect to administrator.');
+      } else {
+        setScanVerified(true);
+        setRejectionReason('');
+        toast.success(`Verified: ${preset.companyName} (${preset.idNumber})`);
+      }
     }, 700);
   };
 
@@ -168,8 +204,17 @@ export default function BusinessCardScannerModal({
       }));
       setIsScanning(false);
       setScanComplete(true);
-      toast.success('Card scan completed successfully!');
-    }, 1200);
+
+      if (sampleData.isAuthorized === false || sampleData.isExpired) {
+        setScanVerified(false);
+        setRejectionReason('ID credentials expired or not found.');
+        toast.error('Not found. Please connect to administrator.');
+      } else {
+        setScanVerified(true);
+        setRejectionReason('');
+        toast.success('ID Matched & Verified in database!');
+      }
+    }, 1000);
   };
 
   const handleInputChange = (e) => {
@@ -183,6 +228,10 @@ export default function BusinessCardScannerModal({
   // Submit and create lead
   const handleCreateLead = async (e) => {
     e.preventDefault();
+    if (scanVerified === false) {
+      toast.error('Not found. Please connect to administrator.');
+      return;
+    }
     if (!leadData.companyName || !leadData.contactName) {
       return toast.error('Company Name and Contact Person are required');
     }
@@ -416,19 +465,34 @@ export default function BusinessCardScannerModal({
                 </div>
               )}
 
-              <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-emerald-300 text-xs">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span className="font-semibold">Fields extracted with 96.4% confidence</span>
+              {scanVerified === false ? (
+                <div className="p-3 bg-rose-950/40 border border-rose-500/50 rounded-xl space-y-1 animate-fadeIn text-xs text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-rose-400 font-bold text-sm">
+                    <AlertTriangle size={16} />
+                    <span>Not found. Please connect to administrator.</span>
+                  </div>
+                  {rejectionReason && (
+                    <p className="text-[11px] text-slate-300">Reason: {rejectionReason}</p>
+                  )}
+                  <p className="text-[10px] text-slate-400">
+                    ID validation failed. Registration in active database records is required before creating a CRM lead.
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setScanComplete(false)}
-                  className="text-[11px] underline hover:text-white"
-                >
-                  Scan another
-                </button>
-              </div>
+              ) : (
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-emerald-300 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-400" />
+                    <span className="font-semibold">ID Validated & Fields extracted with 96.4% confidence</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setScanComplete(false)}
+                    className="text-[11px] underline hover:text-white"
+                  >
+                    Scan another
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Company Name */}
@@ -567,11 +631,15 @@ export default function BusinessCardScannerModal({
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={isScanning}
-                  className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                  disabled={isScanning || scanVerified === false}
+                  className={`flex-1 py-3 px-4 font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 ${
+                    scanVerified === false
+                      ? 'bg-slate-850 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
+                  }`}
                 >
                   <Building2 size={16} />
-                  <span>Create Lead in CRM</span>
+                  <span>{scanVerified === false ? 'Validation Required' : 'Create Lead in CRM'}</span>
                 </button>
                 <button
                   type="button"

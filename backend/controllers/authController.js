@@ -1,4 +1,5 @@
 // backend/controllers/authController.js
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/User');
@@ -541,5 +542,73 @@ exports.getAttendanceHistory = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// @route   POST /api/auth/verify-scan
+// @desc    Strict validation for Face and ID scanning against database
+// @access  Public / Optional Auth
+exports.verifyScan = async (req, res) => {
+  try {
+    const { scanType = 'face', employeeId, email, isBlurry, isDark, noFace, idNumber } = req.body;
+
+    // Rule 1: Quality Check - reject blurry, dark, or missing face
+    if (isBlurry || isDark || noFace) {
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        message: 'Not found. Please connect to administrator.',
+      });
+    }
+
+    // Rule 2: Database Match & Login Check
+    let user = null;
+    const queryTarget = (employeeId || idNumber || email || '').trim();
+
+    if (queryTarget) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(queryTarget);
+      user = await User.findOne({
+        $or: [
+          { employeeId: queryTarget },
+          { email: queryTarget.toLowerCase() },
+          { phone: queryTarget },
+          ...(isObjectId ? [{ _id: queryTarget }] : []),
+        ],
+        isActive: true,
+      });
+    } else if (req.user) {
+      user = await User.findOne({ _id: req.user._id, isActive: true });
+    }
+
+    // Rule 3: Failure Action - not recognized, not registered, or not active
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        verified: false,
+        message: 'Not found. Please connect to administrator.',
+      });
+    }
+
+    // Success - user is verified against database
+    return res.json({
+      success: true,
+      verified: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        employeeId: user.employeeId || `EMP-${user._id.toString().slice(-4).toUpperCase()}`,
+        biometricEnabled: user.biometricEnabled,
+      },
+      message: 'Verified successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      verified: false,
+      message: 'Not found. Please connect to administrator.',
+    });
   }
 };

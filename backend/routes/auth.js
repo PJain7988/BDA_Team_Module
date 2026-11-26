@@ -13,14 +13,16 @@ const {
   biometricRegister,
   logAttendance,
   getAttendanceHistory,
+  verifyScan,
 } = require('../controllers/authController');
-const { auth } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh', refreshToken);
+router.post('/verify-scan', optionalAuth, verifyScan);
 router.post('/biometric-login', biometricLogin);
 router.post('/biometric-register', auth, biometricRegister);
 router.post('/attendance/punch', auth, logAttendance);

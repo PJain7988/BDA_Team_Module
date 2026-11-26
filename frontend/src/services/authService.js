@@ -130,6 +130,11 @@ const authService = {
     const response = await api.get('/api/auth/attendance/history');
     return response.data;
   },
+
+  verifyScan: async (payload) => {
+    const response = await api.post('/api/auth/verify-scan', payload);
+    return response.data;
+  },
 };
 
 export default authService;

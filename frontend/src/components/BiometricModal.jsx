@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  Fingerprint, Scan, ShieldCheck, MapPin, CheckCircle2, AlertCircle, 
-  X, RefreshCw, Smartphone, Sparkles, Camera, Video, UserCheck, Shield,
-  Clock, Check, AlertTriangle, UserX, Mail, Phone, Info
+  Scan, ShieldCheck, MapPin, CheckCircle2, AlertCircle, 
+  X, RefreshCw, Sparkles, Camera, UserCheck, Shield,
+  Clock, Check, AlertTriangle, UserX, CreditCard, Lock
 } from 'lucide-react';
 import biometricService from '../services/biometricService';
 import authService from '../services/authService';
@@ -18,8 +18,8 @@ export default function BiometricModal({
   user = null,
   onSuccess = () => {},
 }) {
-  // Biometric Scan Mode
-  const [scanType, setScanType] = useState('face'); // 'face' | 'fingerprint'
+  // Biometric Scan Mode: 'face' (Face Scanning) or 'id' (ID Scanning)
+  const [scanType, setScanType] = useState('face'); // 'face' | 'id'
   const [status, setStatus] = useState('idle'); // 'idle' | 'scanning' | 'verifying' | 'success' | 'error'
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState('Align face in reticle for biometric verification');
@@ -27,15 +27,14 @@ export default function BiometricModal({
   const [punchType, setPunchType] = useState('in'); // 'in' | 'out'
   const [notes, setNotes] = useState('');
 
-  // Identity & Employee ID Roster Matching State
-  // Allows testing BOTH authorized recognized face AND unrecognized/guest face rejection
-  const [identityMode, setIdentityMode] = useState('authorized'); // 'authorized' | 'unrecognized'
-  const [showAdminHelp, setShowAdminHelp] = useState(false);
-  const [errorMessageDetail, setErrorMessageDetail] = useState('');
-
-  // Computed Employee ID from Logged-in User
-  const employeeId = user?.employeeId || (user?._id ? `EMP-${user._id.slice(-4).toUpperCase()}` : (user?.email ? `EMP-${btoa(user.email).slice(0, 4).toUpperCase()}` : 'EMP-1042'));
+  // Target Employee ID & ID Scanner Inputs
+  const defaultEmployeeId = user?.employeeId || (user?._id ? `EMP-${user._id.slice(-4).toUpperCase()}` : (user?.email ? `EMP-${btoa(user.email).slice(0, 4).toUpperCase()}` : 'EMP-1042'));
+  const [targetIdInput, setTargetIdInput] = useState(defaultEmployeeId);
   const employeeName = user?.name || (user?.email ? user.email.split('@')[0] : 'Priya Jain');
+
+  // Interactive Testing Toggle: Authorized Roster Match vs Unregistered Identity
+  const [identityMode, setIdentityMode] = useState('authorized'); // 'authorized' | 'unregistered'
+  const [errorPrompt, setErrorPrompt] = useState('');
 
   // Live Digital Clock (Ticking every second)
   const [liveClock, setLiveClock] = useState(new Date());
@@ -65,7 +64,6 @@ export default function BiometricModal({
     try {
       setCameraError(false);
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Request front selfie camera
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { 
             facingMode: 'user', 
@@ -82,9 +80,7 @@ export default function BiometricModal({
           videoRef.current.srcObject = stream;
           try {
             await videoRef.current.play();
-          } catch (e) {
-            // Autoplay handle
-          }
+          } catch (e) {}
         }
       } else {
         setCameraError(true);
@@ -124,8 +120,7 @@ export default function BiometricModal({
       stopFaceCamera();
       setCapturedPhoto(null);
       setStatus('idle');
-      setShowAdminHelp(false);
-      setErrorMessageDetail('');
+      setErrorPrompt('');
       return;
     }
 
@@ -241,7 +236,6 @@ export default function BiometricModal({
           const { x, y, width: bw, height: bh } = box;
           const cornerLen = Math.min(bw, bh) * 0.22;
 
-          // Reticle color dynamically responds to quality and status
           let hudColor = '#10b981'; // green ready
           if (status === 'scanning') hudColor = '#22d3ee';
           else if (status === 'error') hudColor = '#f43f5e';
@@ -301,10 +295,10 @@ export default function BiometricModal({
           ctx.fillStyle = hudColor;
           ctx.font = 'bold 10px monospace';
           
-          let telemetryText = `ID: ${employeeId} [READY]`;
-          if (frameQuality.isBlur) telemetryText = `⚠️ BLUR DETECTED (HOLD STILL)`;
-          else if (frameQuality.isDark) telemetryText = `⚠️ INSUFFICIENT LIGHT`;
-          else if (identityMode === 'unrecognized') telemetryText = `TEST: UNREGISTERED FACE`;
+          let telemetryText = `ID: ${targetIdInput} [ALIGNED]`;
+          if (frameQuality.isBlur) telemetryText = `⚠️ BLUR DETECTED (HOLD STEADY)`;
+          else if (frameQuality.isDark) telemetryText = `⚠️ INSUFFICIENT LIGHTING`;
+          else if (identityMode === 'unregistered') telemetryText = `TEST: UNREGISTERED / GUEST`;
           
           ctx.fillText(telemetryText, x, Math.max(14, y - 6));
         } else {
@@ -323,7 +317,7 @@ export default function BiometricModal({
       running = false;
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [cameraActive, scanType, status, confidenceScore, frameQuality, employeeId, identityMode]);
+  }, [cameraActive, scanType, status, confidenceScore, frameQuality, targetIdInput, identityMode]);
 
   // Fetch location & punch state on modal open
   useEffect(() => {
@@ -331,23 +325,20 @@ export default function BiometricModal({
       setStatus('idle');
       setProgress(0);
       setCapturedPhoto(null);
-      setShowAdminHelp(false);
-      setErrorMessageDetail('');
+      setErrorPrompt('');
       setStatusText(
         mode === 'login'
-          ? 'Look into camera or scan fingerprint to sign in'
+          ? 'Look into camera or scan ID to sign in'
           : mode === 'register'
           ? 'Register employee device biometric key for instant access'
           : `Position face inside reticle for daily punch-${punchType.toUpperCase()}`
       );
 
-      // Check current punch state if attendance mode
       if (mode === 'attendance') {
         const state = biometricService.getStoredAttendanceState();
         setPunchType(state.isPunchedIn ? 'out' : 'in');
       }
 
-      // Fetch GPS
       biometricService.getCurrentLocation().then((loc) => {
         setGeoData(loc);
       });
@@ -385,7 +376,6 @@ export default function BiometricModal({
 
       const video = videoRef.current;
       if (video && video.videoWidth > 0 && cameraActive) {
-        // Mirrored snapshot from live video
         const minDim = Math.min(video.videoWidth, video.videoHeight);
         const sx = (video.videoWidth - minDim) / 2;
         const sy = (video.videoHeight - minDim) / 2;
@@ -396,7 +386,6 @@ export default function BiometricModal({
         ctx.drawImage(video, sx, sy, minDim, minDim, 0, 0, size, size);
         ctx.restore();
       } else {
-        // High-tech avatar fallback badge
         const gradient = ctx.createLinearGradient(0, 0, size, size);
         gradient.addColorStop(0, '#0f172a');
         gradient.addColorStop(0.5, '#1e1b4b');
@@ -416,14 +405,13 @@ export default function BiometricModal({
         ctx.fillText(employeeName ? employeeName.slice(0, 2).toUpperCase() : 'BI', size / 2, size / 2 - 10);
       }
 
-      // Burn Cryptographic Timestamp & Watermark Overlay at Bottom
       ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
       ctx.fillRect(0, size - 75, size, 75);
 
       ctx.fillStyle = '#10b981';
       ctx.font = 'bold 15px monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(`🟢 BDA VERIFIED • ${employeeId} • PUNCH ${punchType.toUpperCase()} • ${exactTimeString}`, 16, size - 46);
+      ctx.fillText(`🟢 BDA VERIFIED • ${targetIdInput} • PUNCH ${punchType.toUpperCase()} • ${exactTimeString}`, 16, size - 46);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '12px monospace';
@@ -439,76 +427,65 @@ export default function BiometricModal({
     }
   };
 
-  // Main Biometric Scan Handler with Strict Quality, Face Recognition & Employee ID Validation
-  const handleStartScan = async () => {
-    // ── CHECK 1: Ensure User Session / Identity for Attendance ─────────────
-    if (mode === 'attendance' && !user) {
-      setStatus('error');
-      const msg = 'User session not found / Not logged in. Please sign in or connect to administrator.';
-      setStatusText(msg);
-      setErrorMessageDetail('Authentication required. Unauthenticated devices cannot submit punch records.');
-      setShowAdminHelp(true);
-      biometricService.audio.playErrorTone();
-      toast.error(msg);
-      return;
-    }
+  // Reject Scan and Display Exact Message
+  const triggerRejection = (diagnosticReason = '') => {
+    setStatus('error');
+    setStatusText('Not found. Please connect to administrator.');
+    setErrorPrompt(diagnosticReason);
+    biometricService.audio.playErrorTone();
+    toast.error('Not found. Please connect to administrator.');
+  };
 
-    // ── CHECK 2: Camera & Face Presence Validation ─────────────────────────
+  // Main Biometric Scan Handler with Strict Quality, Face Recognition & ID Validation
+  const handleStartScan = async () => {
+    // ── RULE 1: Face Scanning Quality & Face Detection Checks ─────────────
     if (scanType === 'face') {
       if (!cameraActive) {
-        setStatus('error');
-        const msg = 'Camera offline. Please enable webcam or connect to administrator.';
-        setStatusText(msg);
-        setErrorMessageDetail('Webcam permission not granted or video sensor unavailable.');
-        biometricService.audio.playErrorTone();
-        toast.error(msg);
+        triggerRejection('Camera stream offline or camera permission denied.');
         return;
       }
 
       if (frameQuality.isDark) {
-        setStatus('error');
-        const msg = 'Scan Failed: Image is too dark or camera is covered. Please adjust lighting.';
-        setStatusText(msg);
-        setErrorMessageDetail('Luminance below 22 LUX threshold. Sensor cannot reliably extract facial landmarks.');
-        biometricService.audio.playErrorTone();
-        toast.warn(msg);
+        triggerRejection('Image frame is too dark or camera is covered.');
         return;
       }
 
       if (frameQuality.isBlur) {
-        setStatus('error');
-        const msg = 'Scan Failed: Face image is blurred. Hold device steady and clean camera lens.';
-        setStatusText(msg);
-        setErrorMessageDetail('Edge gradient variance below 3.2. Motion blur prevents biometrics verification.');
-        biometricService.audio.playErrorTone();
-        toast.warn(msg);
+        triggerRejection('Face image is blurry or motion blur detected. Please hold steady.');
         return;
       }
 
       if (!faceDetected) {
-        setStatus('error');
-        const msg = 'Scan Failed: Face not detected. Please align your face inside the circle.';
-        setStatusText(msg);
-        setErrorMessageDetail('No human face detected inside biometric frame boundaries.');
-        biometricService.audio.playErrorTone();
-        toast.warn(msg);
+        triggerRejection('No clear face detected inside reticle boundaries.');
         return;
       }
     }
 
-    // ── START SCANNING & LEDGER LOOKUP ────────────────────────────────────
+    // ── RULE 2: ID Scanning Strict Validation ─────────────────────────────
+    if (scanType === 'id') {
+      if (!targetIdInput || targetIdInput.trim().length < 3) {
+        triggerRejection('ID number is unreadable, empty, or format is invalid.');
+        return;
+      }
+    }
+
+    // ── RULE 3: Login & Authorization Check ───────────────────────────────
+    if (mode === 'attendance' && !user) {
+      triggerRejection('User is not logged in / active session not found.');
+      return;
+    }
+
+    // Begin scanning animation & database match lookup
     setStatus('scanning');
     setProgress(20);
-    setShowAdminHelp(false);
-    setErrorMessageDetail('');
+    setErrorPrompt('');
     setStatusText(
       scanType === 'face'
-        ? `Scanning facial geometry against employee record [${employeeId}]...`
-        : `Reading hardware biometric fingerprint sensor for [${employeeId}]...`
+        ? `Validating face against active database records [${targetIdInput}]...`
+        : `Verifying ID [${targetIdInput}] against database employee records...`
     );
     biometricService.audio.playScanTone();
 
-    // Exact punch timestamp
     const nowTimeObj = new Date();
     const exactFormattedTime = nowTimeObj.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -518,67 +495,74 @@ export default function BiometricModal({
     }) + ' IST';
     setPunchResultTime(exactFormattedTime);
 
-    // Progress animation simulating neural facial recognition & cryptographic hashing
+    // Progress animation
     let currentStep = 20;
     const interval = setInterval(() => {
-      currentStep += 20;
+      currentStep += 25;
       setProgress(currentStep);
 
-      if (currentStep === 40 && scanType === 'face') {
-        setStatusText('Extracting 3D facial depth & landmark vector template...');
-      } else if (currentStep === 60) {
-        setStatusText(`Verifying biometric template against BDA Employee Roster (${employeeId})...`);
+      if (currentStep === 45) {
+        setStatusText('Checking database roster for matching active record...');
       } else if (currentStep >= 80) {
         clearInterval(interval);
       }
-    }, 120);
+    }, 110);
 
     try {
-      // Simulate real biometric ledger matching delay
-      await new Promise((r) => setTimeout(r, 850));
-
-      // ── CHECK 3: Strict Face & Employee ID Roster Recognition ─────────────
-      // If user toggled "Unrecognized Face" OR if in login mode without valid employee account:
-      if (identityMode === 'unrecognized' || (mode === 'login' && !user?.email)) {
+      // If user toggled "Unregistered / Invalid ID" test simulation:
+      if (identityMode === 'unregistered') {
+        await new Promise((r) => setTimeout(r, 800));
         clearInterval(interval);
         setProgress(0);
-        setStatus('error');
-        const rejectMsg = 'Face Not Recognized: Employee ID not found in system roster. Please connect to administrator.';
-        setStatusText(rejectMsg);
-        setErrorMessageDetail(`Biometric template does not match any active authorized personnel in the company database. Unauthorized punch rejected.`);
-        setShowAdminHelp(true);
-        biometricService.audio.playErrorTone();
-        toast.error('❌ Face Not Recognized. Please connect to administrator.');
+        triggerRejection('Unregistered face / unverified ID does not match any active record.');
         return;
       }
+
+      // Query database verification endpoint
+      const verifyRes = await authService.verifyScan({
+        scanType,
+        employeeId: targetIdInput,
+        email: user?.email || (mode === 'login' ? targetIdInput : ''),
+        isBlurry: frameQuality.isBlur,
+        isDark: frameQuality.isDark,
+        noFace: scanType === 'face' ? !faceDetected : false,
+      });
+
+      if (!verifyRes || !verifyRes.verified) {
+        clearInterval(interval);
+        setProgress(0);
+        triggerRejection('No active record matched in database.');
+        return;
+      }
+
+      const activeEmployee = verifyRes.user || user;
 
       // Capture verified photo snapshot
       const photoSnapshot = capturePhotoSnapshot(exactFormattedTime);
 
-      // Execute authentic biometric signature
+      // Authenticate with biometrics
       const authResult = await biometricService.authenticateWithBiometrics({
-        userEmail: user?.email || '',
+        userEmail: activeEmployee.email || user?.email || '',
         promptMessage:
           mode === 'login'
-            ? `Sign in to BDA Manufacturing CRM (${employeeId})`
-            : `Confirm BDA Attendance Punch-${punchType.toUpperCase()} (${employeeId})`,
+            ? `Sign in to BDA Manufacturing CRM (${activeEmployee.employeeId})`
+            : `Confirm BDA Attendance Punch-${punchType.toUpperCase()} (${activeEmployee.employeeId})`,
       });
 
       clearInterval(interval);
       setProgress(95);
       setStatus('verifying');
-      setStatusText(`Face ID Match Verified for ${employeeName} [${employeeId}] (99.8% Confidence)!`);
+      setStatusText(`Verified: ${activeEmployee.name} [${activeEmployee.employeeId}]`);
 
       if (authResult.success) {
         if (mode === 'login') {
-          // Send biometric login request to API
           const response = await authService.biometricLogin({
-            email: user?.email || undefined,
+            email: activeEmployee.email,
             credentialId: authResult.credentialId,
           });
           setProgress(100);
           setStatus('success');
-          setStatusText(`Biometric Sign-In Verified for ${response.user?.name || employeeName}!`);
+          setStatusText(`Verified & Logged In: ${response.user?.name || activeEmployee.name}!`);
           biometricService.audio.playSuccessTone();
           stopFaceCamera();
           setTimeout(() => {
@@ -586,23 +570,22 @@ export default function BiometricModal({
             onClose();
           }, 1200);
         } else if (mode === 'register') {
-          // Register device
           await authService.biometricRegister(authResult.credentialId);
           setProgress(100);
           setStatus('success');
-          setStatusText(`Device Biometric Key Registered for ${employeeName}!`);
+          setStatusText(`Verified & Registered: ${activeEmployee.name}!`);
           biometricService.audio.playSuccessTone();
-          toast.success(`Biometric ID registered for ${employeeName}!`);
+          toast.success(`Biometric ID registered for ${activeEmployee.name}!`);
           stopFaceCamera();
           setTimeout(() => {
             onSuccess(authResult);
             onClose();
           }, 1200);
         } else {
-          // Dedicated Attendance checkIn / checkOut API with Photo & Timestamp
+          // Attendance Punch
           const deviceLabel = scanType === 'face'
-            ? `BDA AI Live Camera Face ID Terminal [${employeeId}]`
-            : (navigator.userAgent.includes('Mac') ? 'MacBook Touch ID' : 'Windows Hello Platform Sensor');
+            ? `BDA Live Camera Face ID [${activeEmployee.employeeId}]`
+            : `BDA ID Sensor Terminal [${activeEmployee.employeeId}]`;
 
           try {
             if (punchType === 'in') {
@@ -610,26 +593,25 @@ export default function BiometricModal({
                 method: 'biometric',
                 deviceName: deviceLabel,
                 location: geoData,
-                notes: notes || `Biometric punch-in verified via Face Recognition [${employeeId} - ${employeeName}]`,
+                notes: notes || `Biometric verified [${activeEmployee.employeeId} - ${activeEmployee.name}]`,
                 verifiedByWebAuthn: true,
                 photoSnapshot: photoSnapshot,
                 punchTime: exactFormattedTime,
-                employeeId: employeeId,
+                employeeId: activeEmployee.employeeId,
               });
             } else {
               await attendanceService.checkOut({
                 location: geoData,
-                notes: notes || `Biometric punch-out verified via Face Recognition [${employeeId} - ${employeeName}]`,
+                notes: notes || `Biometric verified [${activeEmployee.employeeId} - ${activeEmployee.name}]`,
                 photoSnapshot: photoSnapshot,
                 punchTime: exactFormattedTime,
-                employeeId: employeeId,
+                employeeId: activeEmployee.employeeId,
               });
             }
           } catch (e) {
             console.warn('Backend attendance sync warning', e);
           }
 
-          // Update local attendance state
           const nowIso = nowTimeObj.toISOString();
           const nextState = {
             isPunchedIn: punchType === 'in',
@@ -638,8 +620,8 @@ export default function BiometricModal({
             punchType: punchType,
             location: geoData,
             photoSnapshot: photoSnapshot,
-            employeeId: employeeId,
-            employeeName: employeeName,
+            employeeId: activeEmployee.employeeId,
+            employeeName: activeEmployee.name,
           };
           biometricService.setStoredAttendanceState(nextState);
 
@@ -647,8 +629,8 @@ export default function BiometricModal({
           setStatus('success');
           setStatusText(
             punchType === 'in'
-              ? `Punched In at ${exactFormattedTime}! Verified: ${employeeName} (${employeeId}).`
-              : `Punched Out at ${exactFormattedTime}! Logged: ${employeeName} (${employeeId}).`
+              ? `Verified & Punched In at ${exactFormattedTime}! Shift started.`
+              : `Verified & Punched Out at ${exactFormattedTime}! Shift logged.`
           );
           biometricService.audio.playSuccessTone();
           toast.success(`Biometric Punch-${punchType.toUpperCase()} Verified at ${exactFormattedTime}! 🟢`);
@@ -663,13 +645,8 @@ export default function BiometricModal({
       }
     } catch (err) {
       clearInterval(interval);
-      setStatus('error');
       setProgress(0);
-      const errMsg = err.message || 'Biometric verification failed. Please connect to administrator.';
-      setStatusText(errMsg);
-      setErrorMessageDetail('Biometric assertion rejected by cryptographic enclave.');
-      setShowAdminHelp(true);
-      biometricService.audio.playErrorTone();
+      triggerRejection(err.response?.data?.message || err.message || 'Database validation mismatch');
     }
   };
 
@@ -698,7 +675,7 @@ export default function BiometricModal({
     >
       <div className="relative w-full max-w-md bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 border border-slate-700/70 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-white my-auto max-h-[92vh] flex flex-col">
         
-        {/* Glowing top status line indicator */}
+        {/* Status Line */}
         <div className={`h-1.5 w-full bg-gradient-to-r ${
           status === 'success'
             ? 'from-emerald-400 via-teal-500 to-cyan-400'
@@ -716,7 +693,7 @@ export default function BiometricModal({
           <X size={17} />
         </button>
 
-        {/* Header - Fixed top */}
+        {/* Header */}
         <div className="p-4 pb-2 text-center flex-shrink-0">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-[10px] font-semibold uppercase tracking-wider mb-1">
             <Sparkles size={12} className="text-blue-400" />
@@ -731,7 +708,7 @@ export default function BiometricModal({
               : `Field Attendance • Punch ${punchType.toUpperCase()}`}
           </h2>
 
-          {/* Real-Time Live Clock Badge */}
+          {/* Clock */}
           <div className="mt-1.5 flex items-center justify-center">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold shadow-inner">
               <Clock size={13} className="text-cyan-400 animate-pulse" />
@@ -741,20 +718,20 @@ export default function BiometricModal({
             </div>
           </div>
 
-          {/* Target Employee ID Verification Banner */}
+          {/* Target ID Badge */}
           <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] font-mono text-slate-300 bg-slate-850/60 py-1 px-2.5 rounded-lg border border-slate-800">
             <UserCheck size={13} className="text-emerald-400" />
             <span className="text-slate-400">Target ID:</span>
-            <span className="text-cyan-300 font-bold">{employeeId}</span>
+            <span className="text-cyan-300 font-bold">{targetIdInput}</span>
             <span className="text-slate-500">•</span>
             <span className="text-white font-medium">{employeeName}</span>
           </div>
         </div>
 
-        {/* Scrollable Center Body Container (with min-h-0 to avoid footer clipping) */}
+        {/* Scrollable Center Body Container (min-h-0 prevents button cutoff) */}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-5 py-1.5 space-y-2.5">
           
-          {/* Method Selector (Face Recognition vs Fingerprint) */}
+          {/* Method Selector: Face Scanning vs ID Scanning */}
           <div className="flex justify-center">
             <div className="flex bg-slate-800/80 p-0.5 rounded-xl border border-slate-700/60">
               <button
@@ -767,55 +744,65 @@ export default function BiometricModal({
                 }`}
               >
                 <Scan size={13} />
-                <span>Facial Recognition</span>
+                <span>Face Scanning</span>
               </button>
               <button
                 type="button"
-                onClick={() => setScanType('fingerprint')}
+                onClick={() => setScanType('id')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  scanType === 'fingerprint'
+                  scanType === 'id'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Fingerprint size={13} />
-                <span>Fingerprint / Touch ID</span>
+                <CreditCard size={13} />
+                <span>ID Scanning</span>
               </button>
             </div>
           </div>
 
-          {/* Roster Match Test Selector (Lets tester verify legitimate match vs unrecognized face rejection) */}
-          <div className="flex items-center justify-between px-2 py-1 bg-slate-950/70 border border-slate-800 rounded-lg text-[10px]">
-            <span className="text-slate-400 font-medium">Biometric Ledger Mode:</span>
+          {/* Test Validation Mode Selector */}
+          <div className="flex items-center justify-between px-2.5 py-1 bg-slate-950/70 border border-slate-800 rounded-lg text-[10px]">
+            <span className="text-slate-400 font-medium">Database Matching:</span>
             <div className="flex gap-1">
               <button
                 type="button"
-                onClick={() => setIdentityMode('authorized')}
+                onClick={() => {
+                  setIdentityMode('authorized');
+                  setStatus('idle');
+                  setErrorPrompt('');
+                  setStatusText('Align face/ID for verification against database.');
+                }}
                 className={`px-2 py-0.5 rounded transition font-semibold ${
                   identityMode === 'authorized'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
-                title="Simulate authorized employee face match"
+                title="Matches registered active database record"
               >
-                ✓ Registered ID
+                ✓ Active Record
               </button>
               <button
                 type="button"
-                onClick={() => setIdentityMode('unrecognized')}
+                onClick={() => {
+                  setIdentityMode('unregistered');
+                  setStatus('idle');
+                  setErrorPrompt('');
+                  setStatusText('Test Mode: Simulating unverified / unregistered identity.');
+                }}
                 className={`px-2 py-0.5 rounded transition font-semibold ${
-                  identityMode === 'unrecognized'
+                  identityMode === 'unregistered'
                     ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
-                title="Simulate unregistered face / unauthorized visitor to demonstrate rejection"
+                title="Simulate unverified / unregistered identity to verify rejection message"
               >
-                ✗ Test Unrecognized Face
+                ✗ Test Unregistered ID
               </button>
             </div>
           </div>
 
-          {/* Biometric Scanner Visual Reticle */}
+          {/* Scanner Visual Reticle */}
           <div className="py-1 flex flex-col items-center justify-center">
             <div className="relative w-36 h-36 flex items-center justify-center">
               
@@ -844,11 +831,10 @@ export default function BiometricModal({
                   : 'border-slate-700 hover:border-blue-500/60'
               }`}>
                 
-                {/* 1. Live Camera Feed with Canvas Face Tracker */}
+                {/* 1. Face Scanning Mode */}
                 {scanType === 'face' ? (
                   <div className="relative w-full h-full flex items-center justify-center bg-slate-950 overflow-hidden">
                     
-                    {/* If photo captured on success, display verified snapshot preview */}
                     {status === 'success' && capturedPhoto ? (
                       <img
                         src={capturedPhoto}
@@ -857,7 +843,6 @@ export default function BiometricModal({
                       />
                     ) : (
                       <>
-                        {/* Mirrored Live Video Feed */}
                         <video
                           ref={videoRef}
                           autoPlay
@@ -865,8 +850,6 @@ export default function BiometricModal({
                           muted
                           className={`w-full h-full object-cover scale-x-[-1] rounded-full ${cameraActive ? 'block' : 'hidden'}`}
                         />
-
-                        {/* Canvas Face Tracking Overlay */}
                         <canvas
                           ref={canvasRef}
                           className={`absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none rounded-full z-10 ${cameraActive ? 'block' : 'hidden'}`}
@@ -874,7 +857,6 @@ export default function BiometricModal({
                       </>
                     )}
 
-                    {/* Fallback Hologram if camera offline or pending */}
                     {!cameraActive && status !== 'success' && (
                       <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
                         <Camera size={34} className={cameraError ? 'text-rose-400' : 'text-cyan-400 animate-pulse'} />
@@ -893,14 +875,12 @@ export default function BiometricModal({
                       </div>
                     )}
 
-                    {/* Circular Alignment Guide Ring */}
                     {status !== 'success' && (
                       <div className={`absolute inset-2 rounded-full border border-dashed pointer-events-none animate-pulse z-15 ${
                         frameQuality.isBlur ? 'border-amber-400/60' : frameQuality.isDark ? 'border-rose-400/60' : 'border-cyan-400/40'
                       }`} />
                     )}
 
-                    {/* Animated Scanning Laser Beam */}
                     {status === 'scanning' && (
                       <div
                         className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-bounce z-20 pointer-events-none"
@@ -908,22 +888,20 @@ export default function BiometricModal({
                       />
                     )}
 
-                    {/* Success Verified Overlay Badge */}
                     {status === 'success' && (
                       <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] flex flex-col items-center justify-center animate-scaleUp z-30">
                         <CheckCircle2 size={38} className="text-emerald-400 animate-pulse filter drop-shadow" />
                         <span className="text-[9px] font-black text-emerald-300 uppercase tracking-widest mt-1 bg-slate-950/80 px-2 py-0.5 rounded-full border border-emerald-500/40">
-                          {employeeId} VERIFIED
+                          {targetIdInput} VERIFIED
                         </span>
                       </div>
                     )}
 
-                    {/* Error Overlay with Rejection Indicator */}
                     {status === 'error' && (
                       <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center animate-shake z-30 p-2 text-center">
                         <UserX size={36} className="text-rose-500" />
                         <span className="text-[9px] font-bold text-rose-300 uppercase tracking-wider mt-1">
-                          NOT FOUND
+                          REJECTED
                         </span>
                         <span className="text-[8px] text-rose-400 mt-0.5">
                           CONNECT TO ADMIN
@@ -932,8 +910,8 @@ export default function BiometricModal({
                     )}
                   </div>
                 ) : (
-                  /* 2. Fingerprint Reticle Mode */
-                  <div className="relative w-full h-full flex items-center justify-center">
+                  /* 2. ID Scanning Mode */
+                  <div className="relative w-full h-full flex items-center justify-center bg-slate-950 p-2 text-center">
                     {status === 'scanning' && (
                       <div
                         className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-bounce z-20 pointer-events-none"
@@ -941,38 +919,33 @@ export default function BiometricModal({
                       />
                     )}
 
-                    <div
-                      className="absolute inset-0 opacity-20 pointer-events-none"
-                      style={{
-                        backgroundImage: `radial-gradient(circle, #3b82f6 1px, transparent 1px)`,
-                        backgroundSize: '12px 12px',
-                      }}
-                    />
-
                     {status === 'success' ? (
                       <div className="flex flex-col items-center animate-scaleUp z-10">
                         <CheckCircle2 size={42} className="text-emerald-400 animate-pulse" />
                         <span className="text-[9px] font-bold text-emerald-300 uppercase tracking-widest mt-1">
-                          {employeeId} VERIFIED
+                          ID VERIFIED
                         </span>
                       </div>
                     ) : status === 'error' ? (
                       <div className="flex flex-col items-center animate-shake z-10">
-                        <AlertCircle size={42} className="text-rose-400" />
+                        <UserX size={42} className="text-rose-400" />
                         <span className="text-[9px] font-bold text-rose-300 uppercase tracking-widest mt-1">
-                          NOT RECOGNIZED
+                          UNVERIFIED
                         </span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center z-10">
-                        <Fingerprint
-                          size={48}
+                        <CreditCard
+                          size={46}
                           className={`transition-all duration-300 ${
                             status === 'scanning'
                               ? 'text-cyan-400 scale-105 filter drop-shadow-[0_0_8px_#22d3ee]'
                               : 'text-slate-400 hover:text-blue-400'
                           }`}
                         />
+                        <span className="text-[9px] font-mono text-cyan-300 mt-1 uppercase">
+                          {targetIdInput}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -980,7 +953,7 @@ export default function BiometricModal({
               </div>
             </div>
 
-            {/* Live Camera & Face Tracking Status Pill */}
+            {/* Quality Warnings Pill */}
             {scanType === 'face' && status !== 'success' && status !== 'error' && (
               <div className="mt-1.5 flex items-center justify-center gap-1.5">
                 {frameQuality.isDark ? (
@@ -991,12 +964,12 @@ export default function BiometricModal({
                 ) : frameQuality.isBlur ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-bold font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    <span>⚠️ BLUR DETECTED (HOLD CAMERA STILL)</span>
+                    <span>⚠️ BLUR DETECTED (HOLD CAMERA STEADY)</span>
                   </div>
                 ) : faceDetected ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold font-mono">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>🟢 LIVE FACE DETECTED ({identityMode === 'authorized' ? 'AUTHORIZED' : 'TEST UNREGISTERED'})</span>
+                    <span>🟢 LIVE FACE DETECTED (READY)</span>
                   </div>
                 ) : (
                   <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono">
@@ -1007,7 +980,7 @@ export default function BiometricModal({
               </div>
             )}
 
-            {/* Progress bar during scan */}
+            {/* Progress bar */}
             {status === 'scanning' && (
               <div className="w-48 mt-2">
                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -1017,12 +990,12 @@ export default function BiometricModal({
                   />
                 </div>
                 <p className="text-[10px] text-cyan-300 font-mono text-center mt-1">
-                  VERIFYING ID [{employeeId}]: {progress}%
+                  VALIDATING WITH DATABASE: {progress}%
                 </p>
               </div>
             )}
 
-            {/* Status Message */}
+            {/* Status Message: Exact rejection text "Not found. Please connect to administrator." when error */}
             <p className={`text-xs font-medium text-center mt-1 px-4 leading-relaxed ${
               status === 'success'
                 ? 'text-emerald-400 font-semibold'
@@ -1034,57 +1007,46 @@ export default function BiometricModal({
             </p>
           </div>
 
-          {/* Administrator Contact Support Card (Shown when not recognized or error) */}
-          {(status === 'error' || showAdminHelp) && (
-            <div className="p-3 bg-rose-950/30 border border-rose-500/40 rounded-xl space-y-2 animate-fadeIn text-xs">
-              <div className="flex items-start gap-2">
-                <AlertTriangle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span className="font-bold text-rose-300 block">
-                    Identity Not Found in Biometric Database
-                  </span>
-                  <p className="text-[11px] text-slate-300 leading-normal">
-                    {errorMessageDetail || 'Employee face template is not registered or recognition confidence failed.'}
-                  </p>
-                  <p className="text-[11px] text-rose-200 font-semibold">
-                    Please connect to your company administrator to enroll your biometric profile or activate your Employee ID.
-                  </p>
-                </div>
+          {/* Exact Rejection Message Card */}
+          {status === 'error' && (
+            <div className="p-3 bg-rose-950/40 border border-rose-500/50 rounded-xl space-y-1.5 animate-fadeIn text-xs text-center">
+              <div className="flex items-center justify-center gap-1.5 text-rose-400 font-bold text-sm">
+                <AlertTriangle size={16} />
+                <span>Not found. Please connect to administrator.</span>
               </div>
+              {errorPrompt && (
+                <p className="text-[11px] text-slate-300">
+                  Reason: {errorPrompt}
+                </p>
+              )}
+              <p className="text-[10px] text-slate-400">
+                Support: <span className="text-cyan-300 font-mono">admin@mfg.com</span> • IT Desk: <span className="text-cyan-300 font-mono">Ext. 204</span>
+              </p>
+            </div>
+          )}
 
-              {/* Administrator Contact Directory */}
-              <div className="pt-2 border-t border-rose-500/20 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px] font-mono">
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <Mail size={12} className="text-cyan-400 flex-shrink-0" />
-                  <span className="truncate">admin@mfg.com</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <Phone size={12} className="text-cyan-400 flex-shrink-0" />
-                  <span>IT Helpdesk: Ext. 204</span>
-                </div>
-              </div>
-
-              <div className="pt-1 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIdentityMode('authorized');
-                    setStatus('idle');
-                    setShowAdminHelp(false);
-                    setStatusText('Switched to Authorized Employee Mode. Please scan again.');
-                  }}
-                  className="text-[10px] text-cyan-400 underline hover:text-cyan-300 font-semibold"
-                >
-                  Switch to Authorized Employee & Retry Scan ➔
-                </button>
-              </div>
+          {/* ID Input Field (Used in ID Scanning Mode) */}
+          {scanType === 'id' && (
+            <div className="p-2.5 bg-slate-950/70 rounded-xl border border-slate-800 space-y-1.5">
+              <label className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                Employee / Corporate ID Number:
+              </label>
+              <input
+                type="text"
+                value={targetIdInput}
+                onChange={(e) => setTargetIdInput(e.target.value)}
+                placeholder="Enter ID (e.g. EMP-1001, EMP-1042)..."
+                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-cyan-300 focus:outline-none focus:border-blue-500"
+              />
+              <span className="text-[10px] text-slate-500 block">
+                Strict database validation applied. Invalid or expired IDs are rejected.
+              </span>
             </div>
           )}
 
           {/* Mode Specific Controls: Attendance Options */}
           {mode === 'attendance' && (
             <div className="p-2.5 space-y-2 bg-slate-950/70 rounded-xl border border-slate-800/80">
-              {/* Punch in/out toggle */}
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                   Punch Action:
@@ -1115,7 +1077,6 @@ export default function BiometricModal({
                 </div>
               </div>
 
-              {/* GPS Geolocation Info */}
               <div className="flex items-center gap-2 p-2 bg-slate-900/80 rounded-lg border border-slate-800 text-[11px] text-slate-300">
                 <MapPin size={13} className="text-cyan-400 flex-shrink-0" />
                 <div className="flex-1 truncate">
@@ -1126,7 +1087,6 @@ export default function BiometricModal({
                 </div>
               </div>
 
-              {/* Notes input */}
               <input
                 type="text"
                 value={notes}
@@ -1137,18 +1097,17 @@ export default function BiometricModal({
             </div>
           )}
 
-          {/* Geolocation info for login mode */}
           {mode === 'login' && geoData && (
             <div className="py-1">
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500">
                 <ShieldCheck size={12} className="text-blue-400" />
-                <span>Hardware-backed WebAuthn Token • {geoData.address}</span>
+                <span>Strict Database Verification • {geoData.address}</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer Actions - Pinned bottom, always completely visible */}
+        {/* Footer Actions */}
         <div className="p-3 sm:p-4 flex gap-2.5 flex-shrink-0 border-t border-slate-800/80 bg-slate-900/95 sticky bottom-0">
           {status === 'error' ? (
             <button
@@ -1157,7 +1116,7 @@ export default function BiometricModal({
               className="flex-1 py-2.5 sm:py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2"
             >
               <RefreshCw size={14} />
-              <span>Retry Biometric Scan</span>
+              <span>Retry Verification</span>
             </button>
           ) : status === 'success' ? (
             <button
@@ -1182,18 +1141,18 @@ export default function BiometricModal({
               {status === 'scanning' ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Matching Employee ID [{employeeId}]...</span>
+                  <span>Validating Active Record...</span>
                 </>
               ) : (
                 <>
                   {scanType === 'face' ? (
                     <Camera size={15} className="text-white group-hover:scale-110 transition" />
                   ) : (
-                    <Fingerprint size={15} className="text-white group-hover:scale-110 transition" />
+                    <CreditCard size={15} className="text-white group-hover:scale-110 transition" />
                   )}
                   <span>
                     {mode === 'login'
-                      ? `Authenticate ID [${employeeId}]`
+                      ? `Verify & Sign In [${targetIdInput}]`
                       : mode === 'register'
                       ? 'Register Device Key'
                       : `Verify & Punch ${punchType.toUpperCase()}`}
