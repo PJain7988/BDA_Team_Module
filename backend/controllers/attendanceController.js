@@ -24,6 +24,12 @@ const checkIfLate = (time = new Date()) => {
 // @access  Private
 exports.checkIn = async (req, res) => {
   try {
+    if (!req.user || req.user.isActive === false) {
+      return res.status(403).json({
+        message: 'Employee ID not authorized or inactive. Please connect to administrator.',
+      });
+    }
+
     const userId = req.user._id;
     const now = new Date();
     const today = getStartOfDay(now);
@@ -130,6 +136,12 @@ exports.checkIn = async (req, res) => {
 // @access  Private
 exports.checkOut = async (req, res) => {
   try {
+    if (!req.user || req.user.isActive === false) {
+      return res.status(403).json({
+        message: 'Employee ID not authorized or inactive. Please connect to administrator.',
+      });
+    }
+
     const userId = req.user._id;
     const now = new Date();
     const today = getStartOfDay(now);

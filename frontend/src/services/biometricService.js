@@ -220,10 +220,15 @@ const biometricService = {
   },
 
   /**
-   * Legacy wrapper for backward compatibility across modal dialogs
+   * Biometric authentication with strict ID & Roster validation
    */
-  authenticateWithBiometrics: async ({ userEmail = '' } = {}) => {
+  authenticateWithBiometrics: async ({ userEmail = '', isAuthorized = true } = {}) => {
     audioSynth.playScanTone();
+
+    if (!isAuthorized) {
+      audioSynth.playErrorTone();
+      throw new Error('Biometric ID Not Recognized: Employee not found in system roster. Please connect to administrator.');
+    }
 
     // Try real WebAuthn if available and email registered
     if (biometricService.isWebAuthnSupported()) {
@@ -245,7 +250,7 @@ const biometricService = {
     }
 
     // High-tech device simulation fallback
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 800));
     audioSynth.playSuccessTone();
     return {
       success: true,
