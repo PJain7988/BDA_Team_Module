@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['BDA', 'TeamLead', 'Manager'],
+      enum: ['BDA', 'TeamLead', 'Manager', 'Admin'],
       default: 'BDA',
     },
     employeeId: {
@@ -34,6 +34,15 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
       index: true,
+    },
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    faceData: {
+      type: String,
+      default: null,
     },
     phone: {
       type: String,

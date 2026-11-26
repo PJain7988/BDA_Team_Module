@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Briefcase, Users, BarChart3, MessageSquare, 
   LogOut, ChevronLeft, ChevronRight, TrendingUp, Sparkles, 
-  Shield, Clock, X 
+  Shield, Clock, X, UserPlus 
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/slices/authSlice';
@@ -21,8 +21,9 @@ function Sidebar({ mobileOpen = false, onCloseMobile }) {
     { path: '/attendance', label: 'Attendance', icon: Clock, description: 'Biometric punch & roster', badge: 'BIO' },
     { path: '/leads', label: 'Leads', icon: Briefcase, description: 'Manage pipeline' },
     ...(user?.role !== 'BDA' ? [{ path: '/team', label: 'Team', icon: Users, description: 'Team members' }] : []),
+    ...(user?.role === 'Manager' || user?.role === 'Admin' ? [{ path: '/admin/add-member', label: 'Add Member by ID', icon: UserPlus, description: 'High Authority ID Enrollment', badge: 'ADMIN' }] : []),
     ...(user?.role !== 'BDA' ? [{ path: '/analytics', label: 'Analytics', icon: BarChart3, description: 'Performance data' }] : []),
-    ...(user?.role === 'Manager' ? [{ path: '/audit-logs', label: 'Audit Logs', icon: Shield, description: 'Compliance & security', badge: 'SEC' }] : []),
+    ...(user?.role === 'Manager' || user?.role === 'Admin' ? [{ path: '/audit-logs', label: 'Audit Logs', icon: Shield, description: 'Compliance & security', badge: 'SEC' }] : []),
     { path: '/communications', label: 'Comms', icon: MessageSquare, description: 'Client logs' },
   ];
 

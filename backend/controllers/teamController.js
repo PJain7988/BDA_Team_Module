@@ -183,19 +183,169 @@ exports.updateTeam = async (req, res) => {
   }
 };
 
-// @route   DELETE /api/team/:id
-// @desc    Delete team
-// @access  Private (Manager only)
-exports.deleteTeam = async (req, res) => {
+// @route   GET /api/team/check-id/:employeeId
+// @desc    Check if an employee ID is available or already registered
+// @access  Private (High Authority: Manager / Admin)
+exports.checkEmployeeId = async (req, res) => {
   try {
-    const team = await Team.findByIdAndDelete(req.params.id);
-
-    if (!team) {
-      return res.status(404).json({ message: 'Team not found' });
+    const rawId = req.params.employeeId?.trim();
+    if (!rawId) {
+      return res.status(400).json({ available: false, message: 'ID Number is required' });
     }
 
-    res.json({ message: 'Team deleted successfully' });
+    const existing = await User.findOne({
+      employeeId: { $regex: new RegExp(`^${rawId}$`, 'i') },
+    }).select('name employeeId email role isActive');
+
+    if (existing) {
+      return res.json({
+        available: false,
+        message: `ID "${rawId}" already exists and is assigned to ${existing.name}.`,
+        existingMember: existing,
+      });
+    }
+
+    return res.json({
+      available: true,
+      message: `ID "${rawId}" is available for new member registration.`,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @route   POST /api/team/register-by-id
+// @desc    High Authority endpoint: Register new member in database strictly by ID
+// @access  Private (High Authority: Manager / Admin only)
+exports.registerMemberById = async (req, res) => {
+  try {
+    const {
+      employeeId,
+      name,
+      email,
+      phone,
+      role = 'BDA',
+      department = 'Manufacturing Sales',
+      team,
+      faceData,
+      photoSnapshot,
+      notes,
+    } = req.body;
+
+    // 1. Validate ID Number is not empty
+    const cleanId = (employeeId || '').trim();
+    if (!cleanId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: ID Number is required and cannot be empty.',
+      });
+    }
+
+    // 2. Validate Name
+    const cleanName = (name || '').trim();
+    if (!cleanName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed: Member Name is required.',
+      });
+    }
+
+    // 3. Check for Duplicate ID Number in the Database
+    const existingId = await User.findOne({
+      employeeId: { $regex: new RegExp(`^${cleanId}$`, 'i') },
+    });
+
+    if (existingId) {
+      return res.status(400).json({
+        success: false,
+        message: `ID Number "${cleanId}" is already registered in the database for ${existingId.name}. Duplicate IDs are not allowed.`,
+      });
+    }
+
+    // 4. Resolve or generate valid email
+    let cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      const sanitizedName = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const sanitizedId = cleanId.toLowerCase().replace(/[^a-z0-9]/g, '');
+      cleanEmail = `${sanitizedName || 'member'}.${sanitizedId}@mfg-corp.com`;
+    }
+
+    const existingEmail = await User.findOne({ email: cleanEmail });
+    if (existingEmail) {
+      return res.status(400).json({
+        success: false,
+        message: `A member with email "${cleanEmail}" already exists. Please provide a unique email.`,
+      });
+    }
+
+    // 5. Create and save new member record
+    const facePhoto = faceData || photoSnapshot || null;
+    const newMember = new User({
+      employeeId: cleanId,
+      name: cleanName,
+      email: cleanEmail,
+      phone: phone || undefined,
+      password: 'TempPassword@2026', // High Authority provisioned default password
+      role: role || 'BDA',
+      department: department || 'Manufacturing Sales',
+      team: team || null,
+      isActive: true,
+      addedBy: req.user._id, // Audit trail: Admin ID who registered the member
+      avatar: facePhoto,
+      faceData: facePhoto,
+      biometricEnabled: !!facePhoto, // If face template photo captured, enable biometric scanning immediately
+      createdAt: new Date(),
+    });
+
+    await newMember.save();
+
+    // 6. Security Audit Log
+    try {
+      const { logAudit } = require('../utils/auditLogger');
+      await logAudit(
+        'MEMBER_REGISTERED_BY_ID',
+        newMember._id,
+        {
+          employeeId: cleanId,
+          memberName: cleanName,
+          role: newMember.role,
+          addedByAdminId: req.user._id,
+          addedByAdminName: req.user.name,
+          hasBiometricFaceData: !!facePhoto,
+        },
+        req
+      );
+    } catch (auditErr) {
+      console.warn('Audit log write error:', auditErr.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'New member added successfully',
+      member: {
+        _id: newMember._id,
+        employeeId: newMember.employeeId,
+        name: newMember.name,
+        email: newMember.email,
+        role: newMember.role,
+        department: newMember.department,
+        isActive: newMember.isActive,
+        addedBy: req.user._id,
+        hasFaceData: !!facePhoto,
+        createdAt: newMember.createdAt,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Database error: A user with this ID Number or Email already exists.',
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error registering member',
+    });
+  }
+};
+

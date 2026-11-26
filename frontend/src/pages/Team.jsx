@@ -1,6 +1,7 @@
 // frontend/src/pages/Team.jsx
 import React, { useEffect, useState } from 'react';
-import { Plus, Mail, Phone, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Mail, Phone, Trash2, ShieldCheck, UserPlus, CreditCard } from 'lucide-react';
 import teamService from '../services/teamService';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal';
@@ -100,13 +101,22 @@ function Team() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-display tracking-tight">Team Management</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">Manage team members, roles, and track conversions and revenue metrics.</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-505 text-white px-4 py-2.5 rounded-xl shadow-md hover:shadow-indigo-550/10 transition text-xs font-semibold hover-lift self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          <span>Add Member</span>
-        </button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+          <Link
+            to="/admin/add-member"
+            className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-3.5 py-2.5 rounded-xl shadow-md transition text-xs font-semibold"
+          >
+            <ShieldCheck size={16} />
+            <span>Register by ID (High Authority)</span>
+          </Link>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-2.5 rounded-xl transition text-xs font-semibold"
+          >
+            <Plus size={16} />
+            <span>Quick Form</span>
+          </button>
+        </div>
       </div>
 
       {/* Loading Spinner */}
@@ -127,7 +137,14 @@ function Team() {
                         <span className="text-white font-bold text-sm">{member.name.charAt(0).toUpperCase()}</span>
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-gray-905 dark:text-white tracking-tight">{member.name}</h3>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="text-sm font-bold text-gray-905 dark:text-white tracking-tight">{member.name}</h3>
+                          {member.employeeId && (
+                            <span className="font-mono text-[9px] text-cyan-500 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20 font-bold">
+                              {member.employeeId}
+                            </span>
+                          )}
+                        </div>
                         <span className={`inline-block px-2 py-0.5 mt-1 rounded-md text-[9px] font-bold uppercase tracking-wider ${
                           member.role === 'Manager' ? 'bg-purple-500/10 text-purple-650 dark:text-purple-400' :
                           member.role === 'TeamLead' ? 'bg-amber-500/10 text-amber-650 dark:text-amber-400' :

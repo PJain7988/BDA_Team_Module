@@ -46,6 +46,7 @@ const isValidPhone = (phone) => {
  */
 const hasPermission = (userRole, requiredRole) => {
   const roleHierarchy = {
+    Admin: 4,
     Manager: 3,
     TeamLead: 2,
     BDA: 1,

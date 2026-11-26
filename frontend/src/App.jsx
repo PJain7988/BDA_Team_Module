@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import BdaHub from './pages/BdaHub';
 import AuditLogs from './pages/AuditLogs';
 import Attendance from './pages/Attendance';
+import AddMemberById from './pages/AddMemberById';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -104,6 +105,7 @@ function MainLayout() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/communications" element={<Communications />} />
             <Route path="/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/add-member" element={<AddMemberById />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

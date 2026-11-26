@@ -45,6 +45,7 @@ module.exports = {
     BDA: 'BDA',
     TEAM_LEAD: 'TeamLead',
     MANAGER: 'Manager',
+    ADMIN: 'Admin',
   },
 
   // JWT expiration

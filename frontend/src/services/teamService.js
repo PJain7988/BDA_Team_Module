@@ -51,6 +51,16 @@ const teamService = {
     const response = await api.get('/api/analytics/team-performance');
     return response.data;
   },
+
+  checkEmployeeId: async (employeeId) => {
+    const response = await api.get(`/api/team/check-id/${encodeURIComponent(employeeId)}`);
+    return response.data;
+  },
+
+  registerMemberById: async (data) => {
+    const response = await api.post('/api/team/register-by-id', data);
+    return response.data;
+  },
 };
 
 export default teamService;
